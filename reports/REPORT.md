@@ -59,7 +59,7 @@ Lỗi xảy ra ở ảnh `train_16.jpg` (người thứ 1). Đây là một bứ
 
 ## 3. Kiểm chéo
 
-Bạn cùng nhóm: Thành viên nhóm T013
+Hình thức: Làm việc cá nhân (Solo) - Thực hiện tự rà soát kiểm chéo độc lập theo checklist (Chi tiết xem tại [reports/review_partner.md](review_partner.md)).
 
 Khớp lệch `%v=1` nhiều nhất giữa hai bảng đếm:
 
