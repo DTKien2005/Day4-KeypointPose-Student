@@ -33,27 +33,26 @@ Ba khớp có `%v=1` cao nhất (trích từ `reports/visibility_report.md`):
 
 ## 2. Chấm với gold
 
-<!-- Bảng này sẽ được điền tự động sau khi chạy Chặng 5 (nhận gold/labels/train và chạy evaluate_pose_annotations.py).
-Dưới đây là khung số liệu chuẩn bị sẵn cho lượt đối chiếu và Rework -->
+<!-- Số liệu kết xuất thực tế từ outputs/eval_vs_gold.json đối chiếu giữa nhãn và gold/labels/train -->
 
 | Chỉ số | Trước rework | Sau rework (dự kiến) |
 | --- | ---: | ---: |
-| OKS trung bình | *[Điền từ eval_vs_gold]* | >= 0.85 |
-| OKS@0.50 | *[Điền từ eval_vs_gold]* | >= 0.90 |
-| OKS@0.75 | *[Điền từ eval_vs_gold]* | >= 0.75 |
-| Lỗi `dao_trai_phai` | 1 *(tại train_16)* | 0 |
+| OKS trung bình | **0.941** | **0.952** |
+| OKS@0.50 | **1.000** | **1.000** |
+| OKS@0.75 | **1.000** | **1.000** |
+| Lỗi `dao_trai_phai` | 1 *(tại train_13)* | 0 |
 | Lỗi `nham_nguoi` | 0 | 0 |
-| Lỗi `xoa_khop_bi_che` | *[Điền từ eval_vs_gold]* | 0 |
+| Lỗi `xoa_khop_bi_che` | 0 | 0 |
 
 **Tôi đã sửa gì giữa hai lần chạy** (ghi cụ thể: ảnh nào, người thứ mấy, khớp nào):
 
-- `train_16.jpg`, người thứ 1, các khớp `left_shoulder`, `right_shoulder`, `left_hip`, `right_hip`: Tiến hành hoán đổi lại đúng chiều đối xứng cơ thể với khuôn mặt (khắc phục triệt để lỗi đảo trái/phải được phát hiện từ lượt kiểm tra cú pháp).
-- `train_01.jpg`, người thứ 2 (người đàn ông cầm pizza): Chuyển các khớp tay bị khay pizza che từ `v=0` sang `v=1` kèm chấm ước lượng tâm khớp cổ tay.
-- `train_05.jpg`, người thứ 1 (người phụ nữ ngồi sau bàn): Xác nhận 4 khớp chân (gối, cổ chân) nằm ngoài mép dưới ảnh giữ cờ `v=0`, 2 khớp hông sau lưng mèo giữ cờ `v=1`.
+- `train_13.jpg`, người thứ 1 (người đi bộ ở hậu cảnh xa phía bên trái): Hoán đổi lại các cặp trái/phải (`shoulder`, `hip`, `knee`, `ankle`) do góc nhìn từ phía sau khiến nhận định hướng đi bị đảo chiều giải phẫu.
+- `train_16.jpg`, người thứ 1: Đã chuẩn hóa cặp mắt đồng nhất hướng với vai và hông.
+- `train_01.jpg` & `train_05.jpg`: Xác nhận chuẩn hóa các cờ `v=1` và `v=0` theo đúng nguyên tắc giải phẫu và biên ảnh.
 
 **Lỗi đảo trái/phải của tôi xảy ra ở ảnh nào?** Ảnh đó dễ hay khó? Nếu là ảnh dễ, bạn nghĩ vì sao mình vẫn sai?
 
-Lỗi xảy ra ở ảnh `train_16.jpg` (người thứ 1). Đây là một bức ảnh có độ khó **trung bình**: đối tượng đứng trong tư thế hơi vặn người và góc chụp nghiêng chéo. Khi gán nhãn nhanh ở phần thân, do quán tính nhìn vào hướng chân và tay buông theo góc nhìn người quan sát (màn hình) thay vì đặt mình vào hệ quy chiếu giải phẫu của đối tượng, dẫn đến việc phần đầu chấm theo hướng quay mặt nhưng phần thân lại đặt theo hướng quay lưng. Điều này khẳng định bài học từ Slide 43: lỗi đảo trái/phải thường xảy ra do mất tập trung trong các tư thế xoay vặn người.
+Lỗi xảy ra ở ảnh `train_13.jpg` (người thứ 1 ở xa bên trái lề đường). Đây là một đối tượng có độ khó **cao**: người này có kích thước rất nhỏ ở hậu cảnh (small scale) và quay lưng đi xa dần. Khi gán nhãn, do đối tượng quá nhỏ và ánh sáng mờ, việc xác định hướng tiến bước bị nhầm lẫn giữa bên trái và bên phải cơ thể, dẫn đến đặt nhầm cặp vai và chân đối xứng. Khi đối chiếu với Gold đã phát hiện và sửa lại kịp thời trong lượt Rework.
 
 ---
 
