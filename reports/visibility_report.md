@@ -2,12 +2,12 @@
 
 - Thư mục nhãn: `dataset\labels\train`
 - 20 ảnh, 29 skeleton, trung bình 15.93 khớp có v > 0 mỗi người
-- Tổng: v=2 345 | v=1 117 | v=0 31
+- Tổng: v=2 344 | v=1 118 | v=0 31
 
 | # | Khớp | v=2 | v=1 | v=0 | %v=1 |
 | ---: | --- | ---: | ---: | ---: | ---: |
 | 0 | nose | 24 | 5 | 0 | 17% |
-| 1 | left_eye | 21 | 8 | 0 | 28% |
+| 1 | left_eye | 20 | 9 | 0 | 31% |
 | 2 | right_eye | 22 | 7 | 0 | 24% |
 | 3 | left_ear | 12 | 17 | 0 | 59% |
 | 4 | right_ear | 15 | 14 | 0 | 48% |

@@ -15,8 +15,8 @@
       {
         "index": 1,
         "name": "left_eye",
-        "v2_visible": 21,
-        "v1_occluded": 8,
+        "v2_visible": 20,
+        "v1_occluded": 9,
         "v0_outside": 0
       },
       {
@@ -126,8 +126,8 @@
       }
     ],
     "totals": {
-      "v2_visible": 345,
-      "v1_occluded": 117,
+      "v2_visible": 344,
+      "v1_occluded": 118,
       "v0_outside": 31
     }
   },

@@ -598,8 +598,8 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 2,
-          "oks": 0.8721,
+          "your_person": 1,
+          "oks": 0.8717,
           "findings": [
             {
               "type": "gold_khong_gan_nhan",
@@ -659,7 +659,7 @@
         },
         {
           "gold_person": 2,
-          "your_person": 1,
+          "your_person": 2,
           "oks": 0.8516,
           "findings": [
             {
@@ -716,7 +716,7 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 2,
+          "your_person": 1,
           "oks": 0.9765,
           "findings": [
             {
@@ -765,7 +765,7 @@
         },
         {
           "gold_person": 2,
-          "your_person": 1,
+          "your_person": 2,
           "oks": 0.9575,
           "findings": [
             {
@@ -809,7 +809,7 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 1,
+          "your_person": 2,
           "oks": 0.8738,
           "findings": [
             {
@@ -858,7 +858,7 @@
         },
         {
           "gold_person": 2,
-          "your_person": 2,
+          "your_person": 1,
           "oks": 0.9499,
           "findings": [
             {
@@ -999,7 +999,7 @@
       "matches": [
         {
           "gold_person": 1,
-          "your_person": 2,
+          "your_person": 1,
           "oks": 0.9417,
           "findings": [
             {
@@ -1018,7 +1018,7 @@
         },
         {
           "gold_person": 2,
-          "your_person": 1,
+          "your_person": 2,
           "oks": 0.975,
           "findings": [
             {
