@@ -12,14 +12,14 @@ Họ tên: Đỗ Trung Kiên   Nhóm: T013   Ngày: 16/09/2026
 | --- | ---: |
 | Số ảnh đã gán | 20 |
 | Số skeleton | 29 |
-| v=2 / v=1 / v=0 | 345 / 117 / 31 |
+| v=2 / v=1 / v=0 | 344 / 118 / 31 |
 | Thời gian trung bình mỗi ảnh | ~4.5 phút / ảnh |
 
 Ba khớp có `%v=1` cao nhất (trích từ `reports/visibility_report.md`):
 
 1. **`left_ear`**: 59% (17 lần v=1 / 29 người)
 2. **`right_ear`**: 48% (14 lần v=1 / 29 người)
-3. **`left_wrist` & `right_wrist`**: 34% (10 lần v=1 / 29 người mỗi bên) *(kế cận: `left_hip` 31%)*
+3. **`left_wrist` & `right_wrist`**: 34% (10 lần v=1 / 29 người mỗi bên) *(kế cận: `left_eye` 31%, `left_hip` 31%)*
 
 ### Chúng có đúng là những khớp bạn thấy khó gán nhất không? Nếu không, giải thích.
 
@@ -100,13 +100,13 @@ Luật mới đã bổ sung vào `GUIDELINE_MINI.md` sau khi thống nhất:
    - Trong 10 ảnh test, lỗi xuất hiện chủ yếu là **"Lệch nhẹ" (Float)** ở các khớp đầu gối và cổ chân khi người đứng nghiêng hoặc mặc quần thụng, và **"Trượt hẳn"** tại một số khớp cổ tay khi người cầm nắm vật thể phức tạp.
 
 4. **Ảnh nào có OKS thấp nhất giữa nhãn của bạn và model? Ai đúng, và bạn dựa vào đâu?**
-   - Ảnh có OKS thấp nhất là **`train_06.jpg` (OKS = 0.628)**, kế tiếp là `train_13.jpg` (0.653) và `train_15.jpg` (0.658).
-   - Tại `train_06.jpg`, nhãn của con người đúng hơn: đối tượng trong ảnh có tư thế vận động phức tạp và góc chụp xiên, model 2D bị bối rối bởi các nếp gấp trang phục và độ tương phản ánh sáng dẫn đến ước lượng tâm khớp hơi trôi, trong khi người gán nhãn nắm rõ cấu trúc giải phẫu học cơ thể để đặt điểm tâm khớp chính xác.
+   - Theo bảng xếp hạng OKS đối chiếu từ notebook mới nhất (Run 3), ảnh có OKS thấp nhất giữa model và nhãn là **`train_13.jpg` (OKS = 0.598)** ở người đi bộ hậu cảnh xa, kế tiếp là `train_06.jpg` (0.628), `train_13.jpg` (0.653 người thứ hai) và `train_15.jpg` (0.658).
+   - Tại `train_13.jpg`, nhãn của người gán đúng hơn: đối tượng là người đi bộ ở xa phía lề đường (small scale), quay lưng đi xa dần; model bị trôi tọa độ và ước lượng sai lệch vị trí khớp chân/tay khi đối tượng quá nhỏ và thiếu tương phản, trong khi người gán nhãn đã phóng to (zoom in) và xác định đúng hướng tiến bước theo cấu trúc giải phẫu sinh học. Tương tự tại `train_06.jpg`, đối tượng có tư thế vận động phức tạp và góc chụp xiên, model 2D bị bối rối bởi nếp gấp trang phục và bóng đổ trong khi người gán nhãn đặt tâm khớp chính xác.
 
 5. **Ảnh bạn gán tệ nhất có *cũng* là ảnh model đoán tệ nhất không? Nếu có, điều đó nói gì về bức ảnh đó?**
-   - Có sự trùng khớp rõ rệt: các ảnh gây phân vân nhất khi gán nhãn (`train_06`, `train_13`, `train_15`) cũng chính là các ảnh có OKS model thấp nhất. Đặc biệt, có hai ảnh bị **lệch số lượng người**:
-     - `train_10`: Model phát hiện 2 người, nhãn gán 1 người (bỏ sót người ở hậu cảnh).
-     - `train_03`: Model phát hiện 4 người, nhãn gán 2 người (bỏ sót người ở xa).
+   - Có sự trùng khớp rõ rệt: các ảnh gây phân vân nhất khi gán nhãn (`train_13`, `train_06`, `train_15`) cũng chính là các ảnh có OKS model thấp nhất. Đặc biệt, có hai ảnh bị **lệch số lượng người**:
+     - `train_10`: Model phát hiện 2 người, nhãn gán 1 người (model báo động giả một poster/ảnh nền ở phía sau).
+     - `train_03`: Model phát hiện 4 người, nhãn gán 2 người (model phát hiện nhầm hình nhân/búp bê bên lề đường).
    - Điều này phản ánh tính mơ hồ thị giác (visual ambiguity) và độ phức tạp về mật độ đối tượng trong các bức ảnh đó.
 
 ---
