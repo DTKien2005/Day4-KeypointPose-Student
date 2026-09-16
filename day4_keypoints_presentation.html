@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Day 4 Lab Presentation | Human Pose & Keypoints Starter Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Sử dụng font Be Vietnam Pro chuẩn 100% tiếng Việt, hiển thị hoàn hảo dấu thanh và độ đậm nhạt -->
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #070914;
+      --bg-surface: rgba(17, 24, 43, 0.78);
+      --bg-surface-hover: rgba(26, 36, 66, 0.9);
+      --bg-glass: rgba(255, 255, 255, 0.04);
+      --border-glass: rgba(255, 255, 255, 0.12);
+      --border-neon: rgba(0, 242, 254, 0.45);
+      
+      --cyan: #00f2fe;
+      --electric-blue: #3a86ff;
+      --violet: #8338ec;
+      --pink: #ff007f;
+      --amber: #ffb703;
+      --emerald: #06d6a0;
+      --crimson: #ff2a5f;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --font-display: 'Be Vietnam Pro', sans-serif;
+      --font-body: 'Be Vietnam Pro', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --glow-cyan: 0 0 25px rgba(0, 242, 254, 0.35);
+      --glow-pink: 0 0 25px rgba(255, 0, 127, 0.35);
+      --glow-amber: 0 0 25px rgba(255, 183, 3, 0.35);
+      --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Ambient Dynamic Glowing Mesh */
+    .ambient-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(130px);
+      opacity: 0.24;
+      animation: float 22s infinite alternate ease-in-out;
+    }
+    .orb-1 {
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, var(--electric-blue), var(--violet));
+      top: -15vw;
+      left: -10vw;
+    }
+    .orb-2 {
+      width: 45vw;
+      height: 45vw;
+      background: radial-gradient(circle, var(--pink), var(--crimson));
+      bottom: -15vw;
+      right: -10vw;
+      animation-duration: 26s;
+    }
+    .orb-3 {
+      width: 35vw;
+      height: 35vw;
+      background: radial-gradient(circle, var(--cyan), var(--emerald));
+      top: 35%;
+      left: 60%;
+      animation-duration: 20s;
+    }
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(35px, 25px) scale(1.06); }
+      100% { transform: translate(-30px, 45px) scale(0.96); }
+    }
+
+    /* Cyber Grid */
+    .cyber-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Top Deck Header */
+    header.deck-header {
+      position: relative;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(7, 9, 20, 0.88);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-glass);
+    }
+    .deck-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, var(--cyan), var(--electric-blue));
+      color: #050b14;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      box-shadow: var(--glow-cyan);
+    }
+    .brand-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 16px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+    }
+    .brand-title span {
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    /* Quick Action Navigation Buttons in Header */
+    .quick-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .quick-pill-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      color: #ffffff;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition-smooth);
+    }
+    .quick-pill-btn:hover {
+      background: rgba(0, 242, 254, 0.12);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: var(--glow-cyan);
+      transform: translateY(-1px);
+    }
+    .quick-pill-btn.active {
+      background: linear-gradient(135deg, var(--cyan), var(--electric-blue));
+      color: #050b14;
+      font-weight: 700;
+      border-color: transparent;
+      box-shadow: var(--glow-cyan);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      padding: 5px 12px;
+      border-radius: 8px;
+    }
+    .slide-counter strong {
+      color: var(--cyan);
+    }
+    .icon-btn {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-glass);
+      color: var(--text-muted);
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: var(--transition-smooth);
+    }
+    .icon-btn:hover {
+      background: var(--bg-surface-hover);
+      color: var(--cyan);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+
+    /* Top Progress Bar */
+    .deck-progress-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .deck-progress-fill {
+      height: 100%;
+      width: 8.33%;
+      background: linear-gradient(90deg, var(--cyan), var(--electric-blue), var(--pink));
+      box-shadow: 0 0 10px var(--cyan);
+      transition: width 0.35s ease-out;
+    }
+
+    /* Viewport & Slide Engine */
+    main.deck-viewport {
+      position: relative;
+      flex: 1;
+      z-index: 10;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      padding: 30px 50px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateX(40px) scale(0.97);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow-y: auto;
+    }
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(0) scale(1);
+    }
+    .slide:not(.active) * {
+      pointer-events: none !important;
+    }
+    .slide.prev {
+      transform: translateX(-40px) scale(0.97);
+    }
+
+    .slide-inner {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Typography & Headers (100% Fixed & Highly Readable Vietnamese) */
+    .slide-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--cyan);
+      background: rgba(0, 242, 254, 0.08);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      padding: 4px 12px;
+      border-radius: 100px;
+      width: fit-content;
+    }
+    .slide-eyebrow.warning {
+      color: var(--amber);
+      background: rgba(255, 183, 3, 0.08);
+      border-color: rgba(255, 183, 3, 0.3);
+    }
+    .slide-eyebrow.danger {
+      color: var(--crimson);
+      background: rgba(255, 42, 95, 0.1);
+      border-color: rgba(255, 42, 95, 0.35);
+    }
+
+    /* Fixed: Crisp solid color with glowing highlights for solid Vietnamese diacritic support */
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.25;
+      color: #ffffff;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+      display: block;
+    }
+    .slide-title span.hl-cyan {
+      color: var(--cyan);
+      text-shadow: 0 0 22px rgba(0, 242, 254, 0.55);
+    }
+    .slide-title span.hl-pink {
+      color: var(--pink);
+      text-shadow: 0 0 22px rgba(255, 0, 127, 0.55);
+    }
+    .slide-title span.hl-amber {
+      color: var(--amber);
+      text-shadow: 0 0 22px rgba(255, 183, 3, 0.55);
+    }
+
+    .slide-desc {
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 900px;
+    }
+
+    /* Staggered Animations */
+    .slide.active .stagger-1 { animation: fadeInUp 0.4s 0.08s both; }
+    .slide.active .stagger-2 { animation: fadeInUp 0.4s 0.16s both; }
+    .slide.active .stagger-3 { animation: fadeInUp 0.4s 0.24s both; }
+    .slide.active .stagger-4 { animation: fadeInUp 0.4s 0.32s both; }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Interactive Hover Tooltips for Terms */
+    .term-tooltip {
+      position: relative;
+      cursor: help;
+      border-bottom: 1.5px dashed var(--cyan);
+      color: var(--cyan);
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: var(--transition-smooth);
+    }
+    .term-tooltip:hover {
+      color: #ffffff;
+      border-bottom-color: #ffffff;
+      background: rgba(0, 242, 254, 0.15);
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+    .term-tooltip .tooltip-bubble {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      width: max-content;
+      max-width: 320px;
+      background: rgba(11, 16, 32, 0.98);
+      border: 1px solid var(--cyan);
+      box-shadow: 0 10px 30px rgba(0, 242, 254, 0.4);
+      backdrop-filter: blur(20px);
+      color: #f1f5f9;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.45;
+      padding: 10px 14px;
+      border-radius: 10px;
+      pointer-events: none;
+      z-index: 1000;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      text-align: left;
+    }
+    .term-tooltip .tooltip-bubble strong {
+      color: var(--cyan);
+      display: block;
+      font-size: 12.5px;
+      margin-bottom: 3px;
+    }
+    .term-tooltip:hover .tooltip-bubble {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    /* Glass Cards */
+    .glass-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 16px;
+      padding: 20px 22px;
+      backdrop-filter: blur(16px);
+      transition: var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: var(--bg-surface-hover);
+      transform: translateY(-3px);
+    }
+    .card-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .card-icon-badge.pink {
+      background: rgba(255, 0, 127, 0.12);
+      border-color: rgba(255, 0, 127, 0.3);
+      color: var(--pink);
+    }
+    .card-icon-badge.amber {
+      background: rgba(255, 183, 3, 0.12);
+      border-color: rgba(255, 183, 3, 0.3);
+      color: var(--amber);
+    }
+    .card-icon-badge.emerald {
+      background: rgba(6, 214, 160, 0.12);
+      border-color: rgba(6, 214, 160, 0.3);
+      color: var(--emerald);
+    }
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .card-text {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .card-meta-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      color: var(--cyan);
+      width: fit-content;
+    }
+
+    /* Metric Card */
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      padding: 18px 20px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-smooth);
+    }
+    .metric-card:hover {
+      border-color: var(--cyan);
+      transform: translateY(-3px);
+      box-shadow: var(--glow-cyan);
+    }
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--cyan), var(--electric-blue));
+    }
+    .metric-card.pink::before { background: linear-gradient(180deg, var(--pink), var(--violet)); }
+    .metric-card.amber::before { background: linear-gradient(180deg, var(--amber), #ff5500); }
+    .metric-card.emerald::before { background: linear-gradient(180deg, var(--emerald), #00b4d8); }
+    .metric-val {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .metric-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Code Pill Component */
+    .code-pill {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 5px 12px;
+      border-radius: 6px;
+      color: var(--cyan);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .code-pill .copy-tag {
+      cursor: pointer;
+      opacity: 0.7;
+      font-weight: 700;
+      transition: opacity 0.2s;
+    }
+    .code-pill .copy-tag:hover {
+      opacity: 1;
+      color: #fff;
+    }
+
+    /* Interactive Stepper Navigation (Slide 4) */
+    .timeline-steps {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .timeline-step-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 12px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .timeline-step-btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+    .timeline-step-btn.active {
+      background: rgba(0, 242, 254, 0.12);
+      border-color: var(--cyan);
+      box-shadow: var(--glow-cyan);
+    }
+    .timeline-step-btn.critical {
+      border-color: rgba(255, 42, 95, 0.5);
+    }
+    .timeline-step-btn.critical.active {
+      background: rgba(255, 42, 95, 0.16);
+      border-color: var(--crimson);
+      box-shadow: 0 0 20px rgba(255, 42, 95, 0.45);
+    }
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .timeline-step-btn.critical .step-badge {
+      color: var(--crimson);
+    }
+    .step-time {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .step-name {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .timeline-detail-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-neon);
+      border-radius: 16px;
+      padding: 22px 28px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 26px;
+      align-items: center;
+      min-height: 190px;
+    }
+
+    /* Skeleton SVG */
+    .skeleton-view-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(0, 242, 254, 0.06), transparent 70%);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      padding: 16px;
+      position: relative;
+    }
+    svg.skeleton-svg {
+      width: 200px;
+      height: 200px;
+      overflow: visible;
+    }
+    svg.skeleton-svg line {
+      stroke: var(--electric-blue);
+      stroke-width: 2;
+      stroke-linecap: round;
+      opacity: 0.75;
+    }
+    svg.skeleton-svg circle {
+      fill: var(--cyan);
+      stroke: #ffffff;
+      stroke-width: 1.2;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    svg.skeleton-svg circle:hover {
+      r: 4.5;
+      fill: var(--pink);
+      filter: drop-shadow(0 0 6px var(--pink));
+    }
+
+    /* Interactive Visibility Simulator */
+    .vis-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .vis-card.v2:hover, .vis-card.v2.active {
+      border-color: var(--emerald);
+      box-shadow: 0 0 20px rgba(6, 214, 160, 0.25);
+    }
+    .vis-card.v1:hover, .vis-card.v1.active {
+      border-color: var(--amber);
+      box-shadow: 0 0 20px rgba(255, 183, 3, 0.25);
+    }
+    .vis-card.v0:hover, .vis-card.v0.active {
+      border-color: var(--crimson);
+      box-shadow: 0 0 20px rgba(255, 42, 95, 0.25);
+    }
+    .vis-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .vis-val {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .vis-key {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    /* Table & Matrix Layouts */
+    .deck-table-container {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      overflow: hidden;
+      overflow-y: auto;
+      max-height: 420px;
+    }
+    table.deck-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    table.deck-table th {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--cyan);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-glass);
+      position: sticky;
+      top: 0;
+      backdrop-filter: blur(12px);
+      z-index: 2;
+    }
+    table.deck-table td {
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+      vertical-align: middle;
+      line-height: 1.5;
+    }
+    table.deck-table tr:hover td {
+      background: rgba(0, 242, 254, 0.03);
+    }
+        /* Clickable Copyable Commands */
+    .copy-cmd {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--cyan);
+      background: rgba(0, 242, 254, 0.08);
+      border: 1px solid rgba(0, 242, 254, 0.28);
+      padding: 3px 8px;
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      user-select: all;
+    }
+    .copy-cmd:hover {
+      background: rgba(0, 242, 254, 0.22);
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.35);
+      transform: translateY(-1px);
+    }
+    .copy-cmd .copy-icon {
+      font-size: 10px;
+      opacity: 0.75;
+      transition: transform 0.2s ease;
+    }
+    .copy-cmd:hover .copy-icon {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+
+    .file-badge {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--cyan);
+      background: rgba(0, 242, 254, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 242, 254, 0.2);
+    }
+
+    /* Pitfall Cards */
+    .pitfall-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: var(--transition-smooth);
+    }
+    .pitfall-card:hover {
+      border-color: var(--crimson);
+      transform: translateY(-3px);
+    }
+    .pitfall-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--crimson);
+      background: rgba(255, 42, 95, 0.12);
+      border: 1px solid rgba(255, 42, 95, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .socratic-box {
+      background: rgba(0, 242, 254, 0.05);
+      border-left: 3px solid var(--cyan);
+      padding: 9px 12px;
+      border-radius: 0 8px 8px 0;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      font-style: italic;
+    }
+
+    /* Nút Toggle ở chính giữa mép trên của box nội dung chính */
+    .timeline-detail-wrapper {
+      position: relative;
+      margin-top: 24px;
+    }
+    .box-top-toggle-badge {
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #080d1e;
+      border: 1.5px solid var(--cyan);
+      box-shadow: 0 4px 20px rgba(0, 242, 254, 0.4);
+      backdrop-filter: blur(20px);
+      padding: 3px 6px;
+      border-radius: 100px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      z-index: 35;
+    }
+    .toggle-opt {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 100px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition-smooth);
+    }
+    .toggle-opt .opt-icon-svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+    .toggle-opt:hover {
+      color: #ffffff;
+    }
+    .toggle-opt.active {
+      background: linear-gradient(135deg, var(--cyan), var(--electric-blue));
+      color: #050b14;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.5);
+    }
+
+    .toggle-switch-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+    }
+    .toggle-switch-btn:hover {
+      color: #fff;
+    }
+    .toggle-switch-btn.active {
+      background: var(--cyan);
+      color: #050b14;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+    }
+
+    /* Checklist checkboxes */
+    .deliverable-checkbox {
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      border: 2px solid var(--border-glass);
+      border-radius: 5px;
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition-smooth);
+    }
+    .deliverable-checkbox:checked {
+      background: var(--emerald);
+      border-color: var(--emerald);
+    }
+    .deliverable-checkbox:checked::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #050b14;
+      font-weight: 900;
+      font-size: 11px;
+    }
+
+    /* Bottom Deck Dock */
+    footer.deck-dock {
+      position: relative;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: rgba(7, 9, 20, 0.88);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-glass);
+    }
+    .dock-left, .dock-center, .dock-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dock-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-glass);
+      color: var(--text-main);
+      font-family: var(--font-display);
+      font-size: 13.5px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 9px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: var(--transition-smooth);
+    }
+    .dock-btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--cyan);
+      color: var(--cyan);
+      transform: translateY(-2px);
+    }
+    .dock-btn.primary {
+      background: linear-gradient(135deg, var(--cyan), var(--electric-blue));
+      color: #050b14;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+    }
+    .dock-btn.primary:hover {
+      box-shadow: 0 0 28px rgba(0, 242, 254, 0.65);
+      transform: translateY(-2px) scale(1.02);
+    }
+    .key-hint {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-glass);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Modal Drawer for Quick Reference Matrix */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 16, 0.82);
+      backdrop-filter: blur(16px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .drawer-overlay.open {
+      display: flex;
+      opacity: 1;
+    }
+    .drawer-box {
+      background: rgba(14, 20, 36, 0.96);
+      border: 1px solid var(--border-neon);
+      border-radius: 20px;
+      width: 92%;
+      max-width: 1100px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+    }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-glass);
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .drawer-body {
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Toast Notification */
+    .toast-notice {
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(18, 24, 43, 0.96);
+      border: 1px solid var(--cyan);
+      box-shadow: var(--glow-cyan);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    .toast-notice.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 992px) {
+      .grid-2, .grid-3, .grid-4, .timeline-detail-box {
+        grid-template-columns: 1fr;
+      }
+      .slide {
+        padding: 16px 20px;
+      }
+      .slide-title {
+        font-size: 26px;
+      }
+      .timeline-steps {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Ambience -->
+  <div class="ambient-glow">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+  <div class="cyber-grid"></div>
+
+  <!-- Top Header Navigation -->
+  <header class="deck-header">
+    <div class="deck-brand">
+      <div class="brand-badge">VINAI COHORT 4</div>
+      <div class="brand-title">
+        DAY 4 <span>// POSE &amp; KEYPOINTS</span>
+      </div>
+    </div>
+
+    <!-- Quick Switcher Tabs -->
+    <div class="quick-nav-group">
+      <button class="quick-pill-btn" onclick="deck.goTo(1)" id="pill-overview">
+        📊 Tổng Quan Nhanh
+      </button>
+      <button class="quick-pill-btn" onclick="deck.goTo(4)" id="pill-7stages">
+        ⚡ Chi Tiết 7 Chặng
+      </button>
+      <button class="quick-pill-btn" onclick="toggleDrawer(true)" id="pill-matrix">
+        📋 Bảng Tra Cứu (Matrix)
+      </button>
+    </div>
+    
+    <div class="header-actions">
+      <div class="slide-counter">
+        SLIDE <strong id="current-slide-num">01</strong> / <span id="total-slides-num">12</span>
+      </div>
+      <button class="icon-btn" id="btn-sound" title="Bật/Tắt âm thanh điều hướng">
+        🔊
+      </button>
+      <button class="icon-btn" id="btn-drawer" onclick="toggleDrawer(true)" title="Mở bảng tra cứu nhanh">
+        📋
+      </button>
+      <button class="icon-btn" id="btn-fullscreen" title="Toàn màn hình (F)">
+        ⛶
+      </button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="deck-progress-track">
+      <div class="deck-progress-fill" id="progress-bar"></div>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="deck-viewport" id="deck-viewport">
+
+    <!-- SLIDE 1: TỔNG QUAN NHANH (NỘI DUNG ƯU TIÊN) -->
+    <section class="slide active" data-slide="1">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">
+          <span>●</span> TỔNG QUAN NHANH · 240 PHÚT THỰC HÀNH
+        </div>
+        <h1 class="slide-title stagger-2">
+          Tổng Quan Nhanh: <span class="hl-cyan">Nhiệm Vụ &amp; Hai Làn Dữ Liệu</span>
+        </h1>
+        <p class="slide-desc stagger-3">
+          Bài lab kéo dài <strong>240 phút (chia thành 7 chặng)</strong>. Môi trường thao tác chính gồm 
+          <span class="term-tooltip">CVAT
+            <span class="tooltip-bubble">
+              <strong>Computer Vision Annotation Tool</strong>
+              Công cụ gán nhãn thị giác máy tính dùng để vẽ khung xương (skeleton) 17 khớp trên trình duyệt.
+            </span>
+          </span> (gán nhãn) + <strong>Terminal / Colab</strong> (kiểm tra cấu trúc và train thử).
+        </p>
+
+        <!-- Metric Boxes -->
+        <div class="grid-4 stagger-3">
+          <div class="metric-card">
+            <span class="metric-val">240'</span>
+            <span class="metric-label">Tổng thời gian (7 chặng)</span>
+          </div>
+          <div class="metric-card pink">
+            <span class="metric-val">29</span>
+            <span class="metric-label">Người cần gán (Core Train: 20 ảnh)</span>
+          </div>
+          <div class="metric-card amber">
+            <span class="metric-val">10</span>
+            <span class="metric-label">Ảnh Test độc lập (Read-only)</span>
+          </div>
+          <div class="metric-card emerald">
+            <span class="metric-val">150'</span>
+            <span class="metric-label">Mốc tử huyệt khóa bài (Gate)</span>
+          </div>
+        </div>
+
+        <!-- 2 Khối dữ liệu chuẩn -->
+        <div class="grid-2 stagger-4">
+          <div class="glass-card" style="border-left: 4px solid var(--cyan);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="card-title" style="color: var(--cyan);">Tuyến Chính: Core Route (Train Set)</h3>
+              <span class="card-meta-pill">20 Ảnh Train (~29 Người)</span>
+            </div>
+            <p class="card-text">
+              Gán nhãn 20 ảnh lớp học tại <code>dataset/images/train/</code> chứa <strong>29 người</strong> (ảnh 1, 2 và 3 người). Tạo 1 Task CVAT duy nhất chỉ vẽ <code>person</code> (17 điểm chuẩn COCO). Chuyển đổi định dạng sang YOLO Pose và đối chiếu điểm 
+              <span class="term-tooltip">OKS
+                <span class="tooltip-bubble">
+                  <strong>Object Keypoint Similarity (OKS)</strong>
+                  Chỉ số từ 0.0 đến 1.0 đo độ tương đồng giữa điểm bạn gán và điểm chuẩn Gold label, có tính đến kích thước người và độ khó từng khớp.
+                </span>
+              </span> với Gold release.
+            </p>
+          </div>
+
+          <div class="glass-card" style="border-left: 4px solid var(--emerald);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="card-title" style="color: var(--emerald);">Tập Kiểm Thử Độc Lập (Test Bench)</h3>
+              <span class="card-meta-pill" style="color: var(--emerald);">10 Ảnh Test Đã Có Nhãn</span>
+            </div>
+            <p class="card-text">
+              Bộ 10 ảnh tại <code>dataset/images/test/</code> kèm nhãn sẵn <code>dataset/labels/test/</code> để đánh giá năng lực model sau khi fine-tune trên Colab. <strong>Tuyệt đối không sửa, không dùng để train</strong>; tập trung toàn bộ thời gian gán nhãn chuẩn chỉ cho 20 ảnh Core!
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 2: BẢN CHẤT 2 TẦNG (ĐÃ FIX LỖI MŨI TÊN LATEX VÀ TEXT CLIP) -->
+    <section class="slide" data-slide="2">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">TRIẾT LÝ SƯ PHẠM · DIỄN GIẢI 2 TẦNG</div>
+        <h2 class="slide-title stagger-2">Bản Chất Bài Lab: <span class="hl-cyan">Dạy Máy Hiểu Giải Phẫu</span></h2>
+        <p class="slide-desc stagger-3">Không chỉ là chấm điểm trên ảnh, bài lab rèn luyện tư duy gán nhãn có bằng chứng thị giác, kiểm định chất lượng nghiêm ngặt.</p>
+
+        <div class="grid-2 stagger-4">
+          <!-- Tầng Đời Thường -->
+          <div class="glass-card" style="border-top: 4px solid var(--cyan);">
+            <div class="card-icon-badge">🧠</div>
+            <h3 class="card-title">Tầng Đời Thường (Plain-language)</h3>
+            <p class="card-text">
+              "Học viên học cách vẽ 'bộ xương que' (skeleton) 17 khớp nối cho cơ thể người trên công cụ CVAT. Thử thách lớn nhất không phải là chấm điểm dễ, mà là xử lý các tình huống khó: người bị che khuất, người quay lưng (dễ nhầm tay trái/phải), và khuôn mặt bị bôi đen bảo mật (privacy mask)."
+            </p>
+            <div class="socratic-box">
+              "Gán nhãn đúng cũng như tạo luật giao thông cho AI. Luật sai một ly là máy nhận diện lệch cả dặm!"
+            </div>
+          </div>
+
+          <!-- Tầng Kỹ Thuật (ĐÃ FIX: Không còn $\rightarrow$ hay $ thừa) -->
+          <div class="glass-card" style="border-top: 4px solid var(--pink);">
+            <div class="card-icon-badge pink">⚙️</div>
+            <h3 class="card-title">Tầng Kỹ Thuật (Technical Spec)</h3>
+            <p class="card-text">
+              Định nghĩa 
+              <span class="term-tooltip">Topology COCO-17
+                <span class="tooltip-bubble">
+                  <strong>Bộ 17 khớp chuẩn COCO</strong>
+                  Bộ khung xương 17 điểm với 19 cạnh nối chuẩn hóa quốc tế của tập dữ liệu COCO.
+                </span>
+              </span> 
+              → Chuẩn hóa tọa độ Normalized <code>[x, y, v]</code> 
+              → Export chuẩn <strong>COCO Keypoints 1.0</strong> 
+              → Đánh giá độ lệch bằng 
+              <span class="term-tooltip">OKS
+                <span class="tooltip-bubble">
+                  <strong>Object Keypoint Similarity</strong>
+                  Chỉ số đánh giá độ chính xác gán nhãn pose, tương tự như IoU trong bounding box.
+                </span>
+              </span> 
+              → Chạy 
+              <span class="term-tooltip">Diagnostic Train
+                <span class="tooltip-bubble">
+                  <strong>Huấn luyện chẩn đoán</strong>
+                  Chạy 8-10 epochs trên Colab nhằm phát hiện lỗi format dữ liệu, không phải đua điểm mAP.
+                </span>
+              </span> với YOLO Pose.
+            </p>
+            <div class="code-pill" style="border-color: var(--pink);">
+              <span>Mục tiêu: Đạt chuẩn format · Tái lập được · Audit 0 lỗi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 3: 3 QUY TẮC SỐNG CÒN (ĐÃ FIX HEADER HIỂN THỊ RÕ RÀNG 100%) -->
+    <section class="slide" data-slide="3">
+      <div class="slide-inner">
+        <div class="slide-eyebrow warning stagger-1">NGUYÊN TẮC BẤT DI BẤT DỊCH</div>
+        <h2 class="slide-title stagger-2">3 Quy Tắc <span class="hl-amber">"Sống Còn"</span> Khi Gán Nhãn</h2>
+        <p class="slide-desc stagger-3">Khắc ghi 3 quy tắc nền tảng này trước khi đặt bất kỳ điểm chấm nào trên canvas CVAT.</p>
+
+        <div class="grid-3 stagger-4">
+          <!-- Quy tắc 1 -->
+          <div class="glass-card" style="border-top: 4px solid var(--cyan);">
+            <div class="card-icon-badge">🫲</div>
+            <h3 class="card-title">1. Trái / Phải theo Người</h3>
+            <p class="card-text">
+              <code>left_*</code> và <code>right_*</code> là bên trái / phải của <strong>chính người trong ảnh</strong> (giải phẫu cơ thể), TUYỆT ĐỐI KHÔNG theo góc nhìn màn hình của bạn.
+            </p>
+            <div class="socratic-box">
+              Coach: "Khi người mẫu quay lưng, tay phải của họ nằm ở mép bên nào của màn hình?"
+            </div>
+          </div>
+
+          <!-- Quy tắc 2 -->
+          <div class="glass-card" style="border-top: 4px solid var(--emerald);">
+            <div class="card-icon-badge emerald">👁️</div>
+            <h3 class="card-title">2. Bộ 3 Cờ Hiển Thị (v)</h3>
+            <p class="card-text">
+              • <strong>v=2 (Visible)</strong>: Nhìn thấy rõ.<br>
+              • <strong>v=1 (Occluded - Phím Q)</strong>: Bị che nhưng trong ảnh → <em>Vẫn ước lượng chấm</em>.<br>
+              • <strong>v=0 (Outside - Phím O)</strong>: Ngoài mép ảnh → <em>Không đặt chấm</em>.
+            </p>
+            <div style="background: rgba(255, 42, 95, 0.12); padding: 6px 10px; border-radius: 6px; font-size: 11.5px; color: var(--crimson); font-weight: 600;">
+              ⚠️ CẤM DÙNG PHÍM H (Hidden) vì CVAT không lưu và xuất thành v=2!
+            </div>
+          </div>
+
+          <!-- Quy tắc 3 -->
+          <div class="glass-card" style="border-top: 4px solid var(--amber);">
+            <div class="card-icon-badge amber">🧍</div>
+            <h3 class="card-title">3. Làm Trọn Vẹn Từng Người</h3>
+            <p class="card-text">
+              Gán xong toàn bộ 17 điểm của <strong>1 người</strong> rồi mới chuyển sang người bên cạnh. Tuyệt đối không nhảy cóc giữa các người để tránh lỗi nhầm người (xương kéo sang cơ thể bên cạnh)!
+            </p>
+            <div class="socratic-box">
+              "Vẽ dứt điểm từng người là cách duy nhất loại bỏ triệt để lỗi dính xương và nhầm ID!"
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Visibility Simulator -->
+        <div class="glass-card stagger-4" style="background: rgba(0,0,0,0.35); padding: 16px 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-family: var(--font-mono); font-size: 12.5px; color: var(--cyan);">BẤM THỬ ĐỂ XEM QUY TẮC CỜ VISIBILITY:</span>
+            <span id="vis-desc" style="font-size: 13px; color: #cbd5e1;">Bấm vào 1 thẻ bên dưới để xem hướng dẫn</span>
+          </div>
+          <div class="grid-3" style="margin-top: 8px;">
+            <div class="vis-card v2" onclick="setVisDemo(2)">
+              <div class="vis-badge">
+                <span class="vis-val" style="color: var(--emerald);">v = 2</span>
+                <span class="vis-key">Mặc định</span>
+              </div>
+              <span style="font-size: 13px; color: var(--text-main); font-weight: 600;">Visible (Nhìn thấy)</span>
+            </div>
+            <div class="vis-card v1" onclick="setVisDemo(1)">
+              <div class="vis-badge">
+                <span class="vis-val" style="color: var(--amber);">v = 1</span>
+                <span class="vis-key">Phím 'q'</span>
+              </div>
+              <span style="font-size: 13px; color: var(--text-main); font-weight: 600;">Occluded (Bị che)</span>
+            </div>
+            <div class="vis-card v0" onclick="setVisDemo(0)">
+              <div class="vis-badge">
+                <span class="vis-val" style="color: var(--crimson);">v = 0</span>
+                <span class="vis-key">Phím 'o'</span>
+              </div>
+              <span style="font-size: 13px; color: var(--text-main); font-weight: 600;">Outside (Ngoài mép)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 4: MASTER ROADMAP 7 CHẶNG TOÀN CẢNH (INTERACTIVE) -->
+    <section class="slide" data-slide="4">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">LỘ TRÌNH THỰC HIỆN · 240 PHÚT LIÊN HOÀN</div>
+        <h2 class="slide-title stagger-2">Bản Đồ 7 Chặng: <span class="hl-cyan">Làm Gì, Ở Đâu, File Nào?</span></h2>
+        <p class="slide-desc stagger-3">Bấm vào từng chặng bên dưới để xem tóm tắt trực nghĩa việc cần làm ngay và file liên quan.</p>
+
+        <div class="timeline-container stagger-4">
+          <!-- Hướng dẫn chọn chặng kèm nút navigation nổi bật -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+            <span style="font-family: var(--font-mono); font-size: 12px; color: var(--cyan);">CHỌN CHẶNG ĐỂ XEM HÀNH ĐỘNG (HOẶC NHẤP ĐÚP ĐỂ ĐẾN NGAY SLIDE):</span>
+            <button class="dock-btn primary" id="btn-top-jump-stage" style="font-size: 11.5px; padding: 5px 14px; border-radius: 8px;" onclick="deck.goTo(currentTimelineStep + 4)">
+              🚀 Đến Slide Chặng 1 (Slide 05) ➔
+            </button>
+          </div>
+
+          <!-- 7-Step Navigation Bar -->
+          <div class="timeline-steps">
+            <div class="timeline-step-btn active" onclick="setTimelineStep(1)" ondblclick="deck.goTo(5)" title="Chặng 1 (0-20') · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 1</span>
+              <span class="step-time">0 – 20'</span>
+              <span class="step-name">Setup CVAT</span>
+            </div>
+            <div class="timeline-step-btn" onclick="setTimelineStep(2)" ondblclick="deck.goTo(6)" title="Chặng 2 (20-40') · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 2</span>
+              <span class="step-time">20 – 40'</span>
+              <span class="step-name">Warm-up 2 ảnh</span>
+            </div>
+            <div class="timeline-step-btn" onclick="setTimelineStep(3)" ondblclick="deck.goTo(7)" title="Chặng 3 (40-130') · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 3</span>
+              <span class="step-time">40 – 130'</span>
+              <span class="step-name">Sprint 90'</span>
+            </div>
+            <div class="timeline-step-btn" onclick="setTimelineStep(4)" ondblclick="deck.goTo(8)" title="Chặng 4 (130-150') · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 4</span>
+              <span class="step-time">130 – 150'</span>
+              <span class="step-name">Self-QC 3 Lượt</span>
+            </div>
+            <div class="timeline-step-btn critical" onclick="setTimelineStep(5)" ondblclick="deck.goTo(9)" title="Chặng 5 (150-190') 🚨 · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 5 🚨</span>
+              <span class="step-time">150 – 190'</span>
+              <span class="step-name">Gold &amp; Rework</span>
+            </div>
+            <div class="timeline-step-btn" onclick="setTimelineStep(6)" ondblclick="deck.goTo(10)" title="Chặng 6 (190-230') · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 6</span>
+              <span class="step-time">190 – 230'</span>
+              <span class="step-name">Train Colab</span>
+            </div>
+            <div class="timeline-step-btn" onclick="setTimelineStep(7)" ondblclick="deck.goTo(11)" title="Chặng 7 (230-240') · Nhấp đúp để đến ngay slide">
+              <span class="step-badge">CHẶNG 7</span>
+              <span class="step-time">230 – 240'</span>
+              <span class="step-name">Nộp Bài</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Detail Box with Top-Center Toggle Badge -->
+          <div class="timeline-detail-wrapper">
+            <!-- Nút toggle ở chính giữa mép trên của box nội dung chính -->
+            <div class="box-top-toggle-badge">
+              <button class="toggle-opt active" id="btn-mode-compact" onclick="setTimelineMode('compact')" title="Chế độ Tóm gọn">
+                <svg class="opt-icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h8l-2 8 11-13h-7l2-7z"/></svg>
+                Tóm gọn
+              </button>
+              <button class="toggle-opt" id="btn-mode-detail" onclick="setTimelineMode('detailed')" title="Chế độ Chi tiết">
+                <svg class="opt-icon-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Chi tiết
+              </button>
+            </div>
+            <div class="timeline-detail-box" id="timeline-detail-content">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 5: CHẶNG 1 - SETUP PROJECT & SCHEMA TRÊN CVAT -->
+    <section class="slide" data-slide="5">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">CHẶNG 1 · PHÚT 0 – 20 (20 PHÚT)</div>
+        <h2 class="slide-title stagger-2">Chặng 1: <span class="hl-cyan">Thiết Lập Project &amp; Khung Skeleton</span></h2>
+        <p class="slide-desc stagger-3">Dựng khung xương chuẩn trên CVAT. Đọc kỹ hướng dẫn dưới đây để không bị lỗi cú pháp khi nạp nhãn.</p>
+
+        <div class="grid-2 stagger-4">
+          <div class="glass-card">
+            <h3 class="card-title" style="color: var(--cyan);">Nhiệm Vụ Cần Làm Ngay:</h3>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: #e2e8f0;">
+              <li>1. Mở CVAT, tạo Project mới nạp Skeleton label: <code>person</code> (17 điểm COCO-17).</li>
+              <li>2. Chọn chế độ 
+                <span class="term-tooltip">Shape Mode
+                  <span class="tooltip-bubble">
+                    <strong>Chế độ Shape Mode</strong>
+                    Chế độ gán nhãn từng ảnh độc lập, bắt buộc dùng cho keypoint detection. Không chọn Track mode.
+                  </span>
+                </span> (Track mode sẽ xuất sai schema).</li>
+              <li>3. Tạo <strong>Task</strong> và nạp 20 ảnh train từ <code>dataset/images/train/</code> (chứa ~29 người).</li>
+              <li>4. 📂 <strong>Vị trí 20 ảnh train:</strong> Nằm ngay trong thư mục <code>dataset/images/train/</code> của repo này (gồm 20 ảnh từ train_01.jpg → train_20.jpg, tổng 29 người).</li>
+            </ul>
+            <div class="code-pill" style="margin-top: 6px;">
+              <span>Repo Hiện Tại: Day4-KeypointPose-Student</span>
+              <span class="copy-tag" style="background: var(--emerald); color: #070914;">STUDENT REPO</span>
+            </div>
+          </div>
+
+          <!-- Box Hướng dẫn 2 cách nạp Skeleton chuẩn -->
+          <div class="glass-card" style="border-left: 4px solid var(--amber);">
+            <h3 class="card-title" style="color: var(--amber);">⚡ 2 Cách Nạp Skeleton Chuẩn trên CVAT:</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #cbd5e1;">
+              <div style="background: rgba(6, 214, 160, 0.1); border-left: 3px solid var(--emerald); padding: 7px 10px; border-radius: 0 6px 6px 0; color: #d1fae5;">
+                ✅ <strong>CÁCH A (Khuyên dùng - Nhanh nhất): Upload File SVG</strong><br>
+                • Tab <strong>Constructor</strong> → <strong>Add label</strong> (Type: Skeleton, Tên: <code>person</code>).<br>
+                • Bấm icon <strong>Upload a skeleton from SVG</strong> và chọn file <code>assets/schema/coco17-cvat-skeleton.svg</code>.<br>
+                • Tự động nạp đủ 17 điểm với tên và 19 đường nối xương giải phẫu chuẩn COCO.
+              </div>
+              <div style="background: rgba(0, 242, 254, 0.1); border-left: 3px solid var(--cyan); padding: 7px 10px; border-radius: 0 6px 6px 0; color: #a5f3fc;">
+                📐 <strong>CÁCH B: Dán Tab Raw Hoặc Xem JSON</strong><br>
+                • Bấm nút copy bên dưới → Mở tab <strong>Raw</strong> khi tạo Project → dán trực tiếp để tạo skeleton <code>person</code> 17 điểm.<br>
+                • Hoặc xem chi tiết 17 keypoint và 19 cạnh tại <code>assets/schema/coco17-keypoints.json</code>.
+              </div>
+            </div>
+            <div style="margin-top: 8px; display: flex; gap: 8px;">
+              <button class="dock-btn primary" style="font-size: 11.5px; padding: 6px 12px;" onclick="copyRawCvatJson()">
+                📋 1-Click Copy person-17 Raw JSON (Cách B)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 6: CHẶNG 2 - WARM-UP 2 ẢNH & TEST EXPORT -->
+    <section class="slide" data-slide="6">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">CHẶNG 2 · PHÚT 20 – 40 (20 PHÚT)</div>
+        <h2 class="slide-title stagger-2">Chặng 2: <span class="hl-cyan">Khởi Động 2 Ảnh Mẫu &amp; Xuất Thử File</span></h2>
+        <p class="slide-desc stagger-3">Chấm thử 2 ảnh calibration để làm quen phím tắt và đảm bảo export đúng định dạng trước khi gán hàng loạt.</p>
+
+        <div class="grid-2 stagger-4">
+          <div class="glass-card">
+            <h3 class="card-title" style="color: var(--cyan);">Nhiệm Vụ Cần Làm Ngay:</h3>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; color: #e2e8f0;">
+              <li>1. Mở 2 ảnh mẫu warm-up: <code>train_01.jpg</code> và <code>train_02.jpg</code> (trong <code>dataset/images/train/</code>).</li>
+              <li>2. Chọn <code>Draw new skeleton</code> → <code>Shape</code> → <code>person</code>.</li>
+              <li>3. Đặt đủ 17 điểm khớp:
+                <br>• Nhìn rõ: để mặc định (v=2).
+                <br>• Bị che: bấm phím <strong>Q</strong> (Occluded, v=1) → vẫn ước lượng chấm.
+                <br>• Ngoài ảnh: bấm phím <strong>O</strong> (Outside, v=0) → không chấm.
+              </li>
+              <li>4. Bấm <strong>Save</strong> trên toolbar (không dùng Ctrl+S nếu mất focus canvas).</li>
+            </ul>
+          </div>
+
+          <div class="glass-card">
+            <h3 class="card-title" style="color: var(--pink);">Hướng Dẫn Export &amp; Thư Mục Lưu Trong Repo:</h3>
+            <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 6px; font-size: 11.5px; color: #cbd5e1; margin-bottom: 8px; line-height: 1.5;">
+              • <strong>Bước 1 (Export CVAT):</strong> Menu Task → <strong>Export task dataset</strong> → chọn định dạng <strong>COCO Keypoints 1.0</strong>.<br>
+              • <strong>Bước 2 (Thư mục lưu JSON):</strong> Tải file ZIP về, giải nén file JSON đặt vào thư mục: <code>annotations/coco_keypoints/person_keypoints_default.json</code>.<br>
+              • <strong>Bước 3 (Thư mục lưu YOLO txt):</strong> Chạy lệnh 1 bên dưới, tool sẽ đọc JSON và sinh nhãn YOLO Pose (56 số/dòng) trực tiếp vào thư mục: <code>dataset/labels/train/*.txt</code>.
+            </div>
+            <div style="background: rgba(0,242,254,0.06); border-left: 3px solid var(--cyan); padding: 8px 10px; border-radius: 0 8px 8px 0; font-family: var(--font-mono); font-size: 10.5px; line-height: 1.45;">
+              <strong style="color: var(--cyan);">3 LỆNH PYTHON CẦN CHẠY &amp; CÔNG DỤNG:</strong><br>
+              • <code class="copy-cmd" onclick="copyText('python tools/coco_kp_to_yolo_pose.py --coco annotations/coco_keypoints/person_keypoints_default.json --out dataset/labels/train')" title="📋 Bấm để copy lệnh">python tools/coco_kp_to_yolo_pose.py --coco &lt;file&gt;.json --out dataset/labels/train <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Công dụng: Chuyển đổi JSON CVAT sang format YOLO Pose .txt chuẩn.</span><br>
+              • <code class="copy-cmd" onclick="copyText('python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train')" title="📋 Bấm để copy lệnh">python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Công dụng: Kiểm tra cú pháp (đủ 17 keypoint, toạ độ [0,1], cờ v hợp lệ).</span><br>
+              • <code class="copy-cmd" onclick="copyText('python tools/visualize_pose.py --images dataset/images/train --labels dataset/labels/train --out outputs/vis_train')" title="📋 Bấm để copy lệnh">python tools/visualize_pose.py --images dataset/images/train --labels dataset/labels/train --out outputs/vis_train <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Công dụng: Vẽ khung xương lên ảnh tự soi bằng mắt (phát hiện đảo trái/phải).</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 7: CHẶNG 3 - GÁN NHÃN TĂNG TỐC (90 PHÚT) -->
+    <section class="slide" data-slide="7">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">CHẶNG 3 · PHÚT 40 – 130 (90 PHÚT)</div>
+        <h2 class="slide-title stagger-2">Chặng 3: <span class="hl-cyan">Gán Nhãn Tăng Tốc (Sprint 90')</span></h2>
+        <p class="slide-desc stagger-3">90 phút tập trung độc lập cao độ. Hoàn thành toàn bộ 18 ảnh core còn lại (tổng 20 ảnh, ~29 người).</p>
+
+        <div class="grid-3 stagger-4">
+          <div class="glass-card">
+            <div class="card-icon-badge">20</div>
+            <h3 class="card-title">1. Hoàn Thành 20 Ảnh Core</h3>
+            <p class="card-text">
+              Gán nốt 18 ảnh còn lại của Core train. Đảm bảo đủ <strong>29 người</strong> (các ảnh có 2–3 người như <code>train_13.jpg</code> phải vẽ đủ từng người, không bỏ sót).
+            </p>
+            <span class="card-meta-pill">Mục tiêu: Đủ 29 skeleton</span>
+          </div>
+
+          <div class="glass-card" style="border-top: 3px solid var(--cyan);">
+            <div class="card-icon-badge">17</div>
+            <h3 class="card-title">2. Đủ 17 Điểm / Người</h3>
+            <p class="card-text">
+              Không bao giờ xoá điểm. Khớp bị che thì ước lượng và gán <code>v=1</code> (Occluded). Khớp ra ngoài khung ảnh thì gán <code>v=0</code> (Outside).
+            </p>
+            <span class="card-meta-pill" style="color: var(--cyan);">Chuẩn COCO Keypoints 1.0</span>
+          </div>
+
+          <div class="glass-card" style="border-top: 3px solid var(--amber);">
+            <div class="card-icon-badge amber">QC</div>
+            <h3 class="card-title">3. Thống Nhất Guideline</h3>
+            <p class="card-text">
+              Khớp hông là ước lượng giải phẫu. Ghi lại các ca mơ hồ vào <code>GUIDELINE_MINI.md</code> và gắn cờ <code>review_state=needs_review</code> khi phân vân.
+            </p>
+            <span class="card-meta-pill" style="color: var(--amber);">Ghi nhận ca mơ hồ</span>
+          </div>
+        </div>
+
+        <div class="glass-card stagger-4" style="background: rgba(0,0,0,0.35); padding: 12px 18px; border-left: 3px solid var(--emerald);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span style="font-size: 13px; color: #fff; font-weight: 600;">📁 QUY CHUẨN XUẤT FILE &amp; LƯU VÀO REPO SAU KHI GÁN XONG 20 ẢNH:</span>
+            <span class="code-pill"><span>GUIDE.md &amp; GUIDELINE_MINI.md</span></span>
+          </div>
+          <div style="font-size: 12px; color: #cbd5e1; line-height: 1.55;">
+            1. Bấm <strong>Save</strong> trên CVAT → <strong>Export task dataset</strong> dạng <strong>COCO Keypoints 1.0</strong>.<br>
+            2. Giải nén file JSON ghi đè vào: <code>annotations/coco_keypoints/person_keypoints_default.json</code>.<br>
+            3. Chạy lệnh: <code class="copy-cmd" onclick="copyText('python tools/coco_kp_to_yolo_pose.py --coco annotations/coco_keypoints/person_keypoints_default.json --out dataset/labels/train')" title="📋 Bấm để copy">python tools/coco_kp_to_yolo_pose.py --coco annotations/coco_keypoints/person_keypoints_default.json --out dataset/labels/train <span class="copy-icon">📋</span></code> để cập nhật trọn vẹn 20 file nhãn vào <code>dataset/labels/train/*.txt</code>.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 8: CHẶNG 4 - SELF-QC & DEADLINE KHÓA BÀI PHÚT 150 -->
+    <section class="slide" data-slide="8">
+      <div class="slide-inner">
+        <div class="slide-eyebrow danger stagger-1">🚨 MỐC TỬ HUYỆT · PHÚT 130 – 150 (20 PHÚT)</div>
+        <h2 class="slide-title stagger-2">Chặng 4: <span class="hl-pink">Self-QC 3 Lượt &amp; Khóa Bài Độc Lập</span></h2>
+        <p class="slide-desc stagger-3">Rà soát phát hiện lỗi trước khi nộp snapshot. Hết phút 150, hệ thống khóa bài — cấm sửa nhãn để làm đẹp điểm.</p>
+
+        <div class="grid-2 stagger-4">
+          <div class="glass-card">
+            <h3 class="card-title" style="color: var(--cyan);">Tự Rà Soát 3 Lượt (Rẻ → Đắt):</h3>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: #e2e8f0;">
+              <div style="background: rgba(0, 242, 254, 0.08); border-left: 3px solid var(--cyan); padding: 6px 10px; border-radius: 4px; font-size: 12px; color: #a5f3fc; margin-bottom: 4px;">
+                📦 <strong>Lưu ý xuất nhãn:</strong> Đã gán nhãn xong trọn vẹn cả 20 ảnh trên CVAT, học viên thực hiện export <strong>cả cụm 20 ảnh 1 lần duy nhất</strong> (định dạng <strong>COCO Keypoints 1.0</strong>), giải nén JSON và convert sang YOLO txt trước khi chạy 3 lượt rà soát.
+              </div>
+              <div>
+                <strong style="color: var(--cyan);">1. Hình dáng:</strong>
+                Khung xương có bị gãy? Có nhầm tay trái/phải không? Có bị nối xương từ người này sang người đứng cạnh không?
+              </div>
+              <div>
+                <strong style="color: var(--amber);">2. Đếm cờ:</strong>
+                Phân biệt được cờ Q (v=1) và O (v=0) chưa? <em>(Nếu cả bài không có điểm v=1 nào là bị đánh giá ẩu!)</em>.
+              </div>
+              <div>
+                <strong style="color: var(--emerald);">3. Phóng to:</strong>
+                Phóng to 2–3 khớp xem tâm điểm chấm có nằm ngay giữa khớp xương không.
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card" style="border: 2px solid rgba(255, 42, 95, 0.45); background: rgba(255, 42, 95, 0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span class="pitfall-tag">CRITICAL GATE</span>
+              <span style="font-family: var(--font-mono); font-size: 14px; color: var(--crimson); font-weight: 800;">ĐÚNG 150'</span>
+            </div>
+            <h3 class="card-title" style="color: #fff; font-size: 14px; margin-top: 2px;">Export Cả Cụm 20 Ảnh &amp; Lệnh Python Self-QC:</h3>
+            <div style="font-family: var(--font-mono); font-size: 10px; color: var(--cyan); display: flex; flex-direction: column; gap: 4px; line-height: 1.35; margin-top: 4px;">
+              <div style="background: rgba(0,242,254,0.08); padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--cyan); color: #a5f3fc; margin-bottom: 3px;">
+                📦 <strong>Bước 0: Export cả cụm 20 ảnh:</strong> Gán xong 20 ảnh ở Chặng 3 → Bấm Save → Export Task Dataset dạng <strong>COCO Keypoints 1.0</strong> (zip) → Giải nén file JSON vào <code>annotations/coco_keypoints/person_keypoints_default.json</code><br>
+                • Convert cả cụm: <code class="copy-cmd" onclick="copyText('python tools/coco_kp_to_yolo.py --input annotations/coco_keypoints/person_keypoints_default.json --output-dir dataset/labels/train')" title="📋 Bấm để copy lệnh">python tools/coco_kp_to_yolo.py --input annotations/coco_keypoints/person_keypoints_default.json --output-dir dataset/labels/train <span class="copy-icon">📋</span></code>
+              </div>
+              <div>• <code class="copy-cmd" onclick="copyText('python tools/visualize_pose.py --images dataset/images/train --labels dataset/labels/train --out outputs/vis_train')" title="📋 Bấm để copy lệnh">python tools/visualize_pose.py --images dataset/images/train --labels dataset/labels/train --out outputs/vis_train <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Lượt 1: Soi hình dáng 20 ảnh (bắt xương cắt chéo thân hoặc nhầm người).</span></div>
+              <div>• <code class="copy-cmd" onclick="copyText('python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train')" title="📋 Bấm để copy lệnh">python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Lượt 2: Kiểm tra cú pháp (đủ 17 keypoint, toạ độ [0,1], cờ v hợp lệ).</span></div>
+              <div>• <code class="copy-cmd" onclick="copyText('python tools/visibility_report.py --labels dataset/labels/train --out outputs/visibility_report.json --markdown reports/visibility_report.md')" title="📋 Bấm để copy lệnh">python tools/visibility_report.py --labels dataset/labels/train --out outputs/visibility_report.json --markdown reports/visibility_report.md <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Lượt 2: Đếm cờ v (bắt lỗi xoá khớp bị che thay vì gán v=1).</span></div>
+              <div>• <code class="copy-cmd" onclick="copyText('python tools/visibility_report.py --labels dataset/labels/train --compare ../ban_cung_nhom/dataset/labels/train --markdown reports/visibility_compare.md')" title="📋 Bấm để copy lệnh">python tools/visibility_report.py --labels dataset/labels/train --compare ../ban_cung_nhom/dataset/labels/train --markdown reports/visibility_compare.md <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Lượt 3: Kiểm chéo bạn cùng nhóm phát hiện độ lệch guideline.</span></div>
+              <div>• <code class="copy-cmd" onclick="copyText('git commit -m &quot;Lock annotations before gold&quot;')" title="📋 Bấm để copy lệnh">git commit -m "Lock annotations before gold" <span class="copy-icon">📋</span></code><br>
+              <span style="color: #fecdd3;">→ Khóa nhãn: Cam kết mốc nộp bài độc lập trước khi nhận gold ở mốc 150'.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 9: CHẶNG 5 - OKS & REWORK THEO GOLD RELEASE -->
+    <section class="slide" data-slide="9">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">CHẶNG 5 · PHÚT 150 – 190 (40 PHÚT)</div>
+        <h2 class="slide-title stagger-2">Chặng 5: <span class="hl-cyan">Nhận Đáp Án Chuẩn &amp; Chữa Lỗi (Rework)</span></h2>
+        <p class="slide-desc stagger-3">Chấm điểm OKS với Gold labels để tìm ra sai sót điển hình và thực hiện sửa lỗi có căn cứ trên CVAT.</p>
+
+        <div class="grid-2 stagger-4">
+          <div class="glass-card">
+            <h3 class="card-title" style="color: var(--cyan);">Nhiệm Vụ Cần Làm Ngay:</h3>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #e2e8f0;">
+              <li>1. Nhận bộ nhãn tham khảo (Gold labels) từ Coach (chỉ phát sau khi đã khóa bài ở phút 150) → <strong>Giải nén vào thư mục: <code>gold/labels/train/*.txt</code></strong>.</li>
+              <li>2. Chạy công cụ chấm điểm tương đồng 
+                <span class="term-tooltip">OKS
+                  <span class="tooltip-bubble">
+                    <strong>Object Keypoint Similarity</strong>
+                    Đo mức độ trùng khớp giữa các khớp xương của bạn và Gold labels.
+                  </span>
+                </span> để đối chiếu.
+              </li>
+              <li>3. Xác định ít nhất 1 lỗi thuộc các nhóm:
+                <br>• <code>dao_trai_phai</code>: Nhầm bên trái thành bên phải (nguy hiểm nhất).
+                <br>• <code>nham_nguoi</code>: Nối nhầm sang người bên cạnh.
+                <br>• <code>xoa_khop_bi_che</code>: Khớp bị che nhưng xóa mất thay vì gán v=1.
+              </li>
+              <li>4. Mở lại CVAT sửa các lỗi này, <strong>Export lại COCO Keypoints 1.0 vào <code>annotations/coco_keypoints/</code> và convert đè vào <code>dataset/labels/train/</code></strong> (Rework không bị trừ điểm).</li>
+            </ul>
+          </div>
+
+          <div class="glass-card">
+            <h3 class="card-title" style="color: var(--emerald);">Lệnh Chấm OKS &amp; Thứ Tự Rework:</h3>
+            <div style="background: rgba(6, 214, 160, 0.08); border-left: 3px solid var(--emerald); padding: 7px 10px; border-radius: 0 8px 8px 0; font-family: var(--font-mono); font-size: 10px; line-height: 1.4;">
+              <strong>LỆNH CHẤM OKS VS GOLD:</strong><br>
+              <code class="copy-cmd" onclick="copyText('python tools/evaluate_pose_annotations.py --pred dataset/labels/train --gold gold/labels/train --images dataset/images/train --out outputs/eval_vs_gold.json')" title="📋 Bấm để copy lệnh">python tools/evaluate_pose_annotations.py --pred dataset/labels/train --gold gold/labels/train --images dataset/images/train --out outputs/eval_vs_gold.json <span class="copy-icon">📋</span></code><br>
+              <span style="color: #cbd5e1;">→ Công dụng: Chấm OKS và tự động xuất báo cáo phân tích vào <code>outputs/eval_vs_gold.json</code>.</span>
+            </div>
+            <div style="margin-top: 6px; font-size: 11.5px; color: #cbd5e1; line-height: 1.45;">
+              <strong>Thứ tự ưu tiên sửa lỗi:</strong><br>
+              1. Đảo trái/phải ➔ 2. Nhầm người ➔ 3. Thừa/thiếu người ➔ 4. Xóa khớp che ➔ 5. Trượt khớp.
+            </div>
+            <div class="socratic-box" style="margin-top: 6px; font-size: 11px;">
+              💡 <strong>LƯU Ý COACH:</strong> "Mục tiêu của OKS là phát hiện sai lệch để sửa có căn cứ (formative), không phải lấy điểm phạt học viên!"
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 10: CHẶNG 6 & 7 - TRAIN COLAB & NỘP BÀI -->
+    <section class="slide" data-slide="10">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">CHẶNG 6 &amp; 7 · PHÚT 190 – 240 (50 PHÚT)</div>
+        <h2 class="slide-title stagger-2">Chặng 6 &amp; 7: <span class="hl-cyan">Train Colab &amp; Hoàn Thiện Nộp Bài</span></h2>
+        <p class="slide-desc stagger-3">Chạy thử nghiệm mô hình YOLO Pose chẩn đoán luồng dữ liệu và đóng gói toàn bộ sản phẩm nộp repo.</p>
+
+        <div class="grid-2 stagger-4">
+          <!-- Chặng 6 -->
+          <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="card-title" style="color: var(--cyan);">Chặng 6: Train Colab (190 – 230')</h3>
+              <span class="card-meta-pill">Colab GPU T4</span>
+            </div>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: #e2e8f0;">
+              <li>• Chạy notebook: <code>notebooks/day4_pose_finetune_yolo26.ipynb</code> trên GPU T4.</li>
+              <li>• <strong>Công dụng:</strong> Đo model gốc trên test set ➔ Fine-tune trên 20 ảnh vừa gán ➔ Đo lại mAP để xem chênh lệch trước/sau và chẩn đoán luồng dữ liệu.</li>
+              <li>• Đánh giá model: <span class="file-badge">notebooks/day4_pose_finetune_yolo26.ipynb</span></li>
+              <li>• File kết quả: <span class="file-badge">outputs/eval_model.json</span></li>
+            </ul>
+          </div>
+
+          <!-- Chặng 7 -->
+          <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h3 class="card-title" style="color: var(--emerald);">Chặng 7: Báo Cáo &amp; Nộp Bài (230 – 240')</h3>
+              <span class="card-meta-pill" style="color: var(--emerald);">Final Push</span>
+            </div>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #e2e8f0;">
+              <li>• Sanity check cuối: <code class="copy-cmd" onclick="copyText('python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train')" title="📋 Bấm để copy lệnh">python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train <span class="copy-icon">📋</span></code> (đảm bảo nhãn chuẩn trước khi commit).</li>
+              <li>• Báo cáo: <span class="file-badge">reports/REPORT.md</span> &amp; <span class="file-badge">reports/review_partner.md</span></li>
+              <li>• Commit &amp; push: <code class="copy-cmd" onclick="copyText('git add dataset/labels/train annotations reports outputs GUIDELINE_MINI.md &amp;&amp; git commit -m &quot;Day 4: pose annotation + eval&quot; &amp;&amp; git push')" title="📋 Bấm để copy lệnh">git add dataset/labels/train annotations reports outputs GUIDELINE_MINI.md &amp;&amp; git commit -m "Day 4: pose annotation + eval" &amp;&amp; git push <span class="copy-icon">📋</span></code></li>
+              <li>• Nghiệm thu đủ 9 deliverables theo rubric.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 9 Deliverables Checklist -->
+        <div class="glass-card stagger-4" style="background: rgba(0,0,0,0.3); padding: 14px 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="color: var(--cyan); font-size: 13px;">CHECKLIST 8 SẢN PHẨM BẮT BUỘC:</strong>
+            <span id="checklist-counter" style="font-family: var(--font-mono); font-size: 12px; color: var(--emerald);">0 / 8 ĐÃ CHỌN</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 11.5px; color: #cbd5e1;">
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>dataset/labels/train/*.txt</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>coco_keypoints/...default.json</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>reports/visibility_report.md</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>GUIDELINE_MINI.md</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>outputs/eval_vs_gold.json</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>outputs/eval_model.json</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>reports/REPORT.md</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+              <input type="checkbox" class="deliverable-checkbox" onchange="updateChecklist()">
+              <span>reports/review_partner.md</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 11: BẢNG TRA CỨU NHANH (LÀM GÌ - Ở ĐÂU - FILE NÀO?) -->
+    <section class="slide" data-slide="11">
+      <div class="slide-inner">
+        <div class="slide-eyebrow stagger-1">MA TRẬN TRA CỨU TỔNG HỢP</div>
+        <h2 class="slide-title stagger-2">Bảng Tra Cứu Nhanh: <span class="hl-cyan">Làm Gì - Ở Đâu - File Nào?</span></h2>
+        <p class="slide-desc stagger-3">Tra cứu trực diện từng thao tác, vị trí mở file và kết quả đầu ra cần đạt được.</p>
+
+        <div class="deck-table-container stagger-4">
+          <table class="deck-table">
+            <thead>
+              <tr>
+                <th style="width: 14%;">Chặng</th>
+                <th style="width: 28%;">Nhiệm vụ chính</th>
+                <th style="width: 18%;">Nơi thao tác</th>
+                <th style="width: 22%;">File đầu vào / Hướng dẫn</th>
+                <th style="width: 18%;">File kết quả đầu ra</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Setup (0-20')</strong></td>
+                <td>Tạo project &amp; nạp Skeleton person 17 điểm</td>
+                <td>CVAT Web / Docker</td>
+                <td>
+                  <span class="file-badge">assets/schema/coco17-cvat-skeleton.svg</span><br>
+                  <span class="file-badge">assets/schema/coco17-keypoints.json</span>
+                </td>
+                <td>Task Core (~29 người) trên CVAT</td>
+              </tr>
+              <tr>
+                <td><strong>2. Warm-up (20-40')</strong></td>
+                <td>Chấm 2 ảnh mẫu, test export</td>
+                <td>CVAT Web / Docker</td>
+                <td><span class="file-badge">dataset/images/train/train_01.jpg, train_02.jpg</span></td>
+                <td>Zip COCO Keypoints thử nghiệm</td>
+              </tr>
+              <tr>
+                <td><strong>3. Annotate (40-130')</strong></td>
+                <td>Chấm 18 ảnh core còn lại (tổng đủ 20 ảnh, ~29 người)</td>
+                <td>CVAT Web / Docker</td>
+                <td><span class="file-badge">GUIDE.md &amp; GUIDELINE_MINI.md</span></td>
+                <td>Bộ nhãn hoàn chỉnh trên CVAT</td>
+              </tr>
+              <tr>
+                <td><strong>4. Self-QC (130-150')</strong></td>
+                <td>Soi 3 lượt, audit script, khóa bài</td>
+                <td>Terminal</td>
+                <td><span class="file-badge">tools/check_pose_labels.py</span><br><span class="file-badge">tools/visibility_report.py</span></td>
+                <td>
+                  <span class="file-badge">reports/visibility_report.md</span><br>
+                  <span class="file-badge">reports/review_partner.md</span>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>5. Rework (150-190')</strong></td>
+                <td>Chấm điểm OKS với Gold, sửa lỗi sai</td>
+                <td>Terminal + CVAT</td>
+                <td>Gold release từ Coach</td>
+                <td><span class="file-badge">outputs/eval_vs_gold.json</span></td>
+              </tr>
+              <tr>
+                <td><strong>6. Train (190-230')</strong></td>
+                <td>Train thử YOLO Pose chẩn đoán format</td>
+                <td>Google Colab T4</td>
+                <td><span class="file-badge">notebooks/day4_pose_finetune_yolo26.ipynb</span></td>
+                <td><span class="file-badge">outputs/eval_model.json</span></td>
+              </tr>
+              <tr>
+                <td><strong>7. Finalize (230-240')</strong></td>
+                <td>Viết báo cáo &amp; đẩy bài lên Git</td>
+                <td>Git Terminal</td>
+                <td><span class="file-badge">reports/REPORT_TEMPLATE.md</span></td>
+                <td>
+                  <span class="file-badge">reports/REPORT.md</span><br>
+                  <span class="file-badge">reports/review_partner.md</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SLIDE 12: RADAR BẮT LỖI HỌC VIÊN & SOCRATIC COACHING -->
+    <section class="slide" data-slide="12">
+      <div class="slide-inner">
+        <div class="slide-eyebrow warning stagger-1">RADAR BẮT LỖI · PITFALL RADAR</div>
+        <h2 class="slide-title stagger-2">Top 4 Lỗi Điển Hình &amp; <span class="hl-amber">Phản Xạ Gợi Mở (Socratic)</span></h2>
+        <p class="slide-desc stagger-3">Coach tuyệt đối không làm hộ hay sửa file tay, hãy dùng câu hỏi gợi mở để học viên tự nhận ra bản chất.</p>
+
+        <div class="grid-2 stagger-4">
+          <div class="pitfall-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #fff; font-size: 15px;">1. Đảo trái / phải (<code>dao_trai_phai</code>)</strong>
+              <span class="pitfall-tag">Rất phổ biến</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Khi người mẫu quay lưng hoặc nghiêng người, học viên nối tay trái vào bên phải ảnh.
+            </p>
+            <div class="socratic-box">
+              🗣️ <em>"Em hãy đứng lên làm đúng tư thế của người mẫu trong ảnh xem tay phải của họ đang ở đâu?"</em>
+            </div>
+          </div>
+
+          <div class="pitfall-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #fff; font-size: 15px;">2. Xóa khớp bị che (<code>xoa_khop_bi_che</code>)</strong>
+              <span class="pitfall-tag">Lỗi tư duy</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Thấy khuỷu tay bị che khuất thì xóa bỏ node hoặc kéo đại ra mép ảnh chọn Outside (v=0).
+            </p>
+            <div class="socratic-box">
+              🗣️ <em>"Khớp đó dù bị che nhưng cơ thể người có trong ảnh không? Quy tắc v=1 yêu cầu ta ước lượng thế nào?"</em>
+            </div>
+          </div>
+
+          <div class="pitfall-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #fff; font-size: 15px;">3. Nhầm người (<code>nham_nguoi</code>)</strong>
+              <span class="pitfall-tag">Ảnh đông người</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Ảnh 2–3 người, học viên vô tình kéo xương từ vai người này nối sang hông người đứng cạnh.
+            </p>
+            <div class="socratic-box">
+              🗣️ <em>"Em nhìn lại các đường nối xương (edges), có đoạn nào đang bắc cầu giữa hai cơ thể khác nhau không?"</em>
+            </div>
+          </div>
+
+          <div class="pitfall-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #fff; font-size: 15px;">4. Export nhầm format</strong>
+              <span class="pitfall-tag">Thao tác tool</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted);">
+              Chọn nhầm <code>COCO 1.0</code> thay vì <code>COCO Keypoints 1.0</code>, kết quả chỉ có bbox mà mất sạch 17 khớp.
+            </p>
+            <div class="socratic-box">
+              🗣️ <em>"Mở file JSON vừa tải về, em thấy trường keypoints chứa 51 con số hay chỉ có trường bbox 4 số?"</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Control Dock -->
+  <footer class="deck-dock">
+    <div class="dock-left">
+      <button class="dock-btn" onclick="deck.prev()" title="Slide trước (←)">
+        <span>◀</span> Trước
+      </button>
+      <button class="dock-btn" onclick="deck.next()" title="Slide kế (→ hoặc Space)">
+        Tiếp <span>▶</span>
+      </button>
+    </div>
+
+    <div class="dock-center">
+      <select id="slide-select" class="dock-btn" onchange="deck.goTo(Number(this.value))" style="cursor: pointer;">
+        <option value="1">1. Tổng Quan Nhanh &amp; 2 Tuyến</option>
+        <option value="2">2. Bản Chất 2 Tầng</option>
+        <option value="3">3. 3 Quy Tắc "Sống Còn"</option>
+        <option value="4">4. Bản Đồ 7 Chặng Toàn Cảnh</option>
+        <option value="5">5. Chặng 1: Setup CVAT &amp; Schema</option>
+        <option value="6">6. Chặng 2: Warm-up 2 Ảnh &amp; Export</option>
+        <option value="7">7. Chặng 3: Gán Nhãn Tăng Tốc (90')</option>
+        <option value="8">8. Chặng 4: Self-QC &amp; Khóa Bài 150'</option>
+        <option value="9">9. Chặng 5: Nhận Gold &amp; Chữa Lỗi OKS</option>
+        <option value="10">10. Chặng 6 &amp; 7: Colab &amp; Nộp Bài</option>
+        <option value="11">11. Bảng Tra Cứu Nhanh (Matrix)</option>
+        <option value="12">12. Radar Bắt Lỗi Học Viên</option>
+      </select>
+    </div>
+
+    <div class="dock-right">
+      <span class="key-hint">Phím: [←] [→] [Space] [F] [T]</span>
+    </div>
+  </footer>
+
+  <!-- Drawer Modal: Tra Cứu Nhanh & Cheat Sheet Matrix -->
+  <div class="drawer-overlay" id="drawer-modal" onclick="closeDrawer(event)">
+    <div class="drawer-box" onclick="event.stopPropagation()">
+      <div class="drawer-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 20px;">📋</span>
+          <h3 style="font-family: var(--font-display); font-size: 18px; color: #fff;">
+            BẢNG TRA CỨU NHANH: LÀM GÌ - Ở ĐÂU - FILE NÀO?
+          </h3>
+        </div>
+        <button class="icon-btn" onclick="toggleDrawer(false)">✕</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="deck-table-container">
+          <table class="deck-table">
+            <thead>
+              <tr>
+                <th>Chặng</th>
+                <th>Nhiệm vụ chính</th>
+                <th>Nơi thao tác</th>
+                <th>File đầu vào / Hướng dẫn</th>
+                <th>File kết quả đầu ra</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Setup</strong></td>
+                <td>Tạo project &amp; nạp Skeleton person 17 điểm</td>
+                <td>CVAT Web/Docker</td>
+                <td>
+                  <span class="file-badge">assets/schema/coco17-cvat-skeleton.svg</span><br>
+                  <span class="file-badge">assets/schema/coco17-keypoints.json</span>
+                </td>
+                <td>Task Core (~29 người) trên CVAT</td>
+              </tr>
+              <tr>
+                <td><strong>2. Warm-up</strong></td>
+                <td>Chấm 2 ảnh mẫu, test export</td>
+                <td>CVAT Web/Docker</td>
+                <td><span class="file-badge">dataset/images/train/train_01.jpg, train_02.jpg</span></td>
+                <td>File zip COCO Keypoints thử nghiệm</td>
+              </tr>
+              <tr>
+                <td><strong>3. Annotate</strong></td>
+                <td>Chấm 18 ảnh core còn lại (tổng đủ 20 ảnh, ~29 người)</td>
+                <td>CVAT Web/Docker</td>
+                <td><span class="file-badge">GUIDE.md &amp; GUIDELINE_MINI.md</span></td>
+                <td>Bộ nhãn hoàn chỉnh trên CVAT</td>
+              </tr>
+              <tr>
+                <td><strong>4. Self-QC</strong></td>
+                <td>Soi 3 lượt, audit script, khóa bài</td>
+                <td>Terminal</td>
+                <td><span class="file-badge">tools/check_pose_labels.py</span><br><span class="file-badge">tools/visibility_report.py</span></td>
+                <td>
+                  <span class="file-badge">reports/visibility_report.md</span><br>
+                  <span class="file-badge">reports/review_partner.md</span>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>5. Rework</strong></td>
+                <td>Chấm điểm OKS với Gold, sửa lỗi sai</td>
+                <td>Terminal + CVAT</td>
+                <td>Gold release từ Coach</td>
+                <td><span class="file-badge">outputs/eval_vs_gold.json</span></td>
+              </tr>
+              <tr>
+                <td><strong>6. Train</strong></td>
+                <td>Train thử YOLO Pose chẩn đoán format</td>
+                <td>Google Colab T4</td>
+                <td><span class="file-badge">notebooks/day4_pose_finetune_yolo26.ipynb</span></td>
+                <td><span class="file-badge">outputs/eval_model.json</span></td>
+              </tr>
+              <tr>
+                <td><strong>7. Finalize</strong></td>
+                <td>Viết báo cáo &amp; đẩy bài lên Git</td>
+                <td>Git Terminal</td>
+                <td><span class="file-badge">reports/REPORT_TEMPLATE.md</span></td>
+                <td>
+                  <span class="file-badge">reports/REPORT.md</span><br>
+                  <span class="file-badge">reports/review_partner.md</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-notice" id="toast">Đã copy đường dẫn vào clipboard!</div>
+
+  <!-- Audio Synthesizer & Deck Engine -->
+  <script>
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      }
+      playBlip(freq = 650, duration = 0.07) {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.4, this.ctx.currentTime + duration);
+          gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+    }
+    const sfx = new SoundFX();
+
+    class PresentationDeck {
+      constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.totalSlides = this.slides.length;
+        this.currentIndex = 0;
+        this.progressBar = document.getElementById('progress-bar');
+        this.currentSlideNum = document.getElementById('current-slide-num');
+        this.totalSlidesNum = document.getElementById('total-slides-num');
+        this.slideSelect = document.getElementById('slide-select');
+        
+        this.init();
+      }
+
+      init() {
+        this.totalSlidesNum.textContent = String(this.totalSlides).padStart(2, '0');
+        this.updateState();
+        this.bindEvents();
+      }
+
+      goTo(index) {
+        if (index < 1 || index > this.totalSlides) return;
+        const targetIndex = index - 1;
+        if (targetIndex === this.currentIndex) return;
+
+        this.slides[this.currentIndex].classList.remove('active');
+        this.slides[this.currentIndex].classList.add('prev');
+        
+        this.currentIndex = targetIndex;
+        
+        this.slides.forEach((slide, i) => {
+          if (i !== this.currentIndex) {
+            slide.classList.remove('active');
+            if (i > this.currentIndex) slide.classList.remove('prev');
+          }
+        });
+
+        this.slides[this.currentIndex].classList.remove('prev');
+        this.slides[this.currentIndex].classList.add('active');
+
+        sfx.playBlip(720, 0.05);
+        this.updateState();
+      }
+
+      next() {
+        if (this.currentIndex < this.totalSlides - 1) {
+          this.goTo(this.currentIndex + 2);
+        }
+      }
+
+      prev() {
+        if (this.currentIndex > 0) {
+          this.goTo(this.currentIndex);
+        }
+      }
+
+      updateState() {
+        const slideNumber = this.currentIndex + 1;
+        this.currentSlideNum.textContent = String(slideNumber).padStart(2, '0');
+        if (this.slideSelect) this.slideSelect.value = slideNumber;
+        
+        const progressPercent = (slideNumber / this.totalSlides) * 100;
+        if (this.progressBar) this.progressBar.style.width = `${progressPercent}%`;
+
+        // Update top pill buttons active state
+        document.getElementById('pill-overview').classList.toggle('active', slideNumber === 1);
+        document.getElementById('pill-7stages').classList.toggle('active', slideNumber >= 4 && slideNumber <= 10);
+        document.getElementById('pill-matrix').classList.toggle('active', slideNumber === 11);
+      }
+
+      bindEvents() {
+        window.addEventListener('keydown', (e) => {
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+          if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            e.preventDefault();
+            this.next();
+          } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            this.prev();
+          } else if (e.key === 'Home') {
+            this.goTo(1);
+          } else if (e.key === 'End') {
+            this.goTo(this.totalSlides);
+          } else if (e.key === 'f' || e.key === 'F') {
+            toggleFullscreen();
+          } else if (e.key === 't' || e.key === 'T' || e.key === 'm' || e.key === 'M') {
+            toggleDrawer();
+          } else if (e.key === 'Escape') {
+            toggleDrawer(false);
+          }
+        });
+      }
+    }
+
+    const deck = new PresentationDeck();
+
+    // Timeline Data với 2 tầng nội dung: Tóm Gọn (Compact) & Chi Tiết (Detailed)
+    let currentTimelineStep = 1;
+    let currentTimelineMode = 'compact';
+
+    const timelineData = {
+      1: {
+        title: "Chặng 1: Thiết Lập Project & Skeleton person COCO-17",
+        time: "Phút 0 – 20 (20')",
+        badge: "Setup Foundation",
+        file: "assets/schema/coco17-cvat-skeleton.svg & dataset/images/train/",
+        // Chế độ Tóm Gọn
+        quickAction: "Tạo Project CVAT nạp Skeleton person 17 điểm. Tạo Task nạp 20 ảnh train từ dataset/images/train/ (chứa ~29 người).",
+        location: "CVAT Web (http://localhost:8080) & Student Repo",
+        keyFile: "assets/schema/coco17-cvat-skeleton.svg & dataset/images/train/",
+        quickTip: "20 ảnh core train nằm sẵn ở dataset/images/train/. Upload SVG coco17-cvat-skeleton.svg để nạp skeleton!",
+        // Chế độ Chi Tiết
+        desc: "Khởi tạo Project CVAT với skeleton person 17 điểm COCO. Hỗ trợ 2 cách: Upload SVG (khuyên dùng) hoặc dán JSON vào tab Raw.",
+        detailedSteps: [
+          "1. Thư mục làm việc: Đang ở ngay trong repo Day4-KeypointPose-Student.",
+          "2. CÁCH A (Khuyên dùng - Nhanh nhất): Vào Constructor → Add label (person) → bấm Upload SVG chọn assets/schema/coco17-cvat-skeleton.svg.",
+          "3. CÁCH B (Tab Raw): Mở tab Raw khi tạo Project → dán JSON person-17 (hoặc đối chiếu assets/schema/coco17-keypoints.json).",
+          "4. Tạo Task: nạp 20 ảnh từ dataset/images/train/ (chứa ~29 người). Bắt buộc chọn Shape Mode."
+        ],
+        action: "20 ảnh train lấy từ dataset/images/train/; schema lấy từ assets/schema/coco17-cvat-skeleton.svg!"
+      },
+      2: {
+        title: "Chặng 2: Khởi Động 2 Ảnh Mẫu & Test Export",
+        time: "Phút 20 – 40 (20')",
+        badge: "Warm-up Checkpoint",
+        file: "dataset/images/train/train_01.jpg, train_02.jpg",
+        quickAction: "Gán thử 2 ảnh warm-up (train_01, train_02). Luyện phím tắt Q (Occluded) và O (Outside). Export thử COCO Keypoints 1.0.",
+        location: "CVAT Canvas (Frame 0 & Frame 1)",
+        keyFile: "dataset/images/train/train_01.jpg, train_02.jpg",
+        quickTip: "Kiểm tra file JSON có trường 'keypoints' với 51 số hay không.",
+        desc: "Gán thử 2 ảnh warm-up, export COCO Keypoints JSON và chạy 3 lệnh python kiểm tra chất lượng.",
+        detailedSteps: [
+          "1. Thao tác CVAT: Gán 2 ảnh đầu tiên (train_01, train_02), bấm phím Q (v=1 bị che) và O (v=0 ngoài ảnh) → Save → Export COCO Keypoints 1.0.",
+          "2. Lệnh 1: python tools/coco_kp_to_yolo_pose.py --coco <file>.json --out dataset/labels/train (Convert sang YOLO txt).",
+          "3. Lệnh 2: python tools/check_pose_labels.py --images dataset/images/train --labels dataset/labels/train (Kiểm tra cú pháp).",
+          "4. Lệnh 3: python tools/visualize_pose.py --images dataset/images/train --labels dataset/labels/train --out outputs/vis_train (Soi hình ảnh xem có đảo trái/phải không)."
+        ],
+        action: "Soi kỹ file JSON bên trong zip xem có đủ trường 'keypoints' 51 số không."
+      },
+      3: {
+        title: "Chặng 3: Annotation Sprint Tăng Tốc",
+        time: "Phút 40 – 130 (90')",
+        badge: "90' Sprint Độc Lập",
+        file: "GUIDE.md & GUIDELINE_MINI.md",
+        quickAction: "Gán nốt 18 ảnh core còn lại (tổng đủ 20 ảnh, ~29 người). Không tạo thêm skeleton thứ hai.",
+        location: "CVAT Task Core (dataset/images/train/)",
+        keyFile: "GUIDE.md & dataset/images/train/",
+        quickTip: "Luôn đủ 17 điểm / người, trái/phải theo cơ thể, làm xong từng người!",
+        desc: "90 phút làm việc độc lập cao độ. Chú ý các ảnh có 2-3 người (như train_13) phải vẽ đủ từng người một.",
+        detailedSteps: [
+          "1. Core Task: Gán đủ 29 người trên 20 ảnh (không bỏ sót người thứ 2, 3).",
+          "2. Không bao giờ xoá điểm: khớp bị che chọn v=1 (Occluded), ra ngoài khung chọn v=0 (Outside).",
+          "3. Phân vân vị trí giải phẫu: gắn review_state=needs_review và ghi chép vào GUIDELINE_MINI.md.",
+          "4. Làm xong hẳn 1 người rồi mới sang người kế tiếp để tránh nối nhầm xương."
+        ],
+        action: "Gán nhãn độc lập, không tham khảo bài người khác trước khi khóa bài!"
+      },
+      4: {
+        title: "Chặng 4: Tự Kiểm Tra (Self-QC) 3 Lượt",
+        time: "Phút 130 – 150 (20')",
+        badge: "Pre-lock Audit",
+        file: "tools/check_pose_labels.py & tools/visibility_report.py",
+        quickAction: "Rà soát 3 lớp: Hình dáng xương → Đếm cờ v → Zoom khớp. Export zip và chạy các script kiểm định chất lượng.",
+        location: "Terminal & Báo cáo reports/",
+        keyFile: "tools/visibility_report.py & reports/review_partner.md",
+        quickTip: "Cả bài không có điểm v=1 nào là dấu hiệu làm ẩu!",
+        desc: "Tự rà soát dữ liệu 3 lượt theo quy trình rẻ trước, đắt sau kèm các script python kiểm định.",
+        detailedSteps: [
+          "1. Lượt 1 (Hình dáng): python tools/visualize_pose.py (Soi 20 ảnh bắt xương cắt chéo hoặc nhầm người).",
+          "2. Lượt 2 (Đếm cờ): python tools/check_pose_labels.py & tools/visibility_report.py (Đếm cờ v=0,1,2; bắt lỗi xóa khớp che).",
+          "3. Lượt 3 (Kiểm chéo): python tools/visibility_report.py --compare ../ban_cung_nhom/dataset/labels/train (Đo độ lệch guideline).",
+          "4. Khóa bài: git commit -m \"Lock annotations before gold\" (Cam kết độc lập trước mốc phút 150)."
+        ],
+        action: "Chuẩn bị chốt file snapshot, ghi nhận mã băm SHA-256."
+      },
+      5: {
+        title: "Chặng 5: MỐC KHÓA BÀI & Rework Theo Gold",
+        time: "Phút 150 – 190 (40')",
+        badge: "🚨 CRITICAL GATE",
+        file: "outputs/eval_vs_gold.json",
+        quickAction: "🚨 ĐÚNG 150': KHÓA BÀI. Nhận Gold release, chấm điểm OKS bằng evaluate_pose_annotations.py. Chọn 1 lỗi sửa lại trên CVAT.",
+        location: "Terminal + CVAT",
+        keyFile: "Gold release & outputs/eval_vs_gold.json",
+        quickTip: "Không dùng OKS để chấm phạt; mục tiêu là phát hiện lỗi để sửa có căn cứ!",
+        desc: "Khóa bài độc lập mốc 150', nhận Gold reference và chạy script chấm OKS để rework.",
+        detailedSteps: [
+          "1. Khóa snapshot đúng 150'. Nhận Gold labels từ giảng viên.",
+          "2. Lệnh chấm OKS: python tools/evaluate_pose_annotations.py --pred dataset/labels/train --gold gold/labels/train --images dataset/images/train --out outputs/eval_vs_gold.json.",
+          "3. Công dụng: Chấm điểm OKS, Precision, Recall và xuất danh sách lỗi gọi tên (đảo trái/phải, nhầm người, xóa khớp che, trượt khớp).",
+          "4. Mở lại CVAT sửa ít nhất 1 lỗi và export lại bản đối chứng (rework)."
+        ],
+        action: "Tuyệt đối không phát Gold release trước phút 150!"
+      },
+      6: {
+        title: "Chặng 6: Diagnostic Train trên Colab T4",
+        time: "Phút 190 – 230 (40')",
+        badge: "Model Health-check",
+        file: "notebooks/day4_pose_finetune_yolo26.ipynb",
+        quickAction: "Convert nhãn sang YOLO Pose (.txt, 56 số/dòng). Chạy fine-tune 8-10 epochs trên Colab T4 để kiểm tra dữ liệu.",
+        location: "Google Colab GPU T4",
+        keyFile: "notebooks/day4_pose_finetune_yolo26.ipynb & outputs/eval_model.json",
+        quickTip: "Train thử để chẩn đoán format dữ liệu, không nhằm mục đích đua điểm mAP.",
+        desc: "Đưa dữ liệu vào mô hình YOLO Pose thực tế để xác nhận nhãn không làm sập pipeline huấn luyện.",
+        detailedSteps: [
+          "1. Chạy script chuyển đổi COCO Keypoints sang nhãn YOLO Pose txt.",
+          "2. Mở Colab T4, nạp nhãn và chạy fine-tune 8-10 epochs.",
+          "3. Kiểm tra log loss và predict ảnh mẫu xem có bounding box và skeleton không.",
+          "4. Nếu GPU lỗi hoặc quá 10 phút: sử dụng artifact mẫu dự phòng từ Coach."
+        ],
+        action: "Lưu file kết quả vào outputs/eval_model.json."
+      },
+      7: {
+        title: "Chặng 7: Hoàn Thiện Báo Cáo & Đóng Gói Nộp Bài",
+        time: "Phút 230 – 240 (10')",
+        badge: "Final Deliverable",
+        file: "reports/REPORT.md & reports/review_partner.md",
+        quickAction: "Điền báo cáo cá nhân REPORT.md, nhận xét bài bạn review_partner.md. Rà soát đủ 8 sản phẩm và push Git.",
+        location: "Git Terminal & Markdown Editor",
+        keyFile: "reports/REPORT.md & reports/review_partner.md",
+        quickTip: "Kiểm tra kỹ commit đủ 8 deliverables trước khi hết giờ!",
+        desc: "Đóng gói toàn bộ sản phẩm và hoàn tất đánh giá chéo giữa các bạn học viên.",
+        detailedSteps: [
+          "1. Hoàn thiện báo cáo phân tích trước & sau khi chữa lỗi OKS.",
+          "2. Viết nhận xét đánh giá chéo cho bạn cặp trong review_partner.md.",
+          "3. Kiểm tra danh sách 9 deliverables trong repo.",
+          "4. Git add, commit và push lên repository."
+        ],
+        action: "Nghiệm thu toàn bộ trước khi kết thúc buổi lab."
+      }
+    };
+
+    function setTimelineMode(mode) {
+      currentTimelineMode = mode;
+      document.getElementById('btn-mode-compact').classList.toggle('active', mode === 'compact');
+      document.getElementById('btn-mode-detail').classList.toggle('active', mode === 'detailed');
+      renderTimelineContent();
+      sfx.playBlip(750, 0.04);
+    }
+
+    function setTimelineStep(step, forceRender = false) {
+      if (!forceRender && currentTimelineStep === step) {
+        deck.goTo(step + 4);
+        return;
+      }
+      currentTimelineStep = step;
+      document.querySelectorAll('.timeline-step-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === step);
+      });
+      const topJumpBtn = document.getElementById('btn-top-jump-stage');
+      if (topJumpBtn) {
+        topJumpBtn.innerHTML = `🚀 Đến Slide Chặng ${step} (Slide 0${step + 4}) ➔`;
+        topJumpBtn.onclick = () => deck.goTo(step + 4);
+      }
+      renderTimelineContent();
+      sfx.playBlip(560, 0.05);
+    }
+
+    function renderTimelineContent() {
+      const data = timelineData[currentTimelineStep];
+      const detailBox = document.getElementById('timeline-detail-content');
+      if (!detailBox) return;
+
+      if (currentTimelineMode === 'compact') {
+        // Giao diện TÓM GỌN (Direct & Action-driven)
+        detailBox.innerHTML = `
+          <div style="animation: fadeIn 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span class="slide-eyebrow ${currentTimelineStep === 5 ? 'danger' : ''}">${data.badge}</span>
+              <span style="font-family: var(--font-mono); font-size: 12.5px; color: var(--cyan);">${data.time}</span>
+              <span class="card-meta-pill" style="font-size: 10px; color: var(--emerald);">CHẾ ĐỘ TÓM GỌN</span>
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 19px; color: #fff; margin-bottom: 10px;">${data.title}</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: #e2e8f0;">
+              <div>🎯 <strong>Làm gì ngay:</strong> <span style="color: #cbd5e1;">${data.quickAction}</span></div>
+              <div>📍 <strong>Nơi thao tác:</strong> <span style="color: var(--cyan); font-family: var(--font-mono); font-size: 12px;">${data.location}</span></div>
+              <div>📁 <strong>File liên quan:</strong> <span class="file-badge">${data.keyFile}</span></div>
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-glass); border-radius: 12px; padding: 14px; animation: fadeIn 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong style="color: ${currentTimelineStep === 5 ? 'var(--crimson)' : 'var(--amber)'}; font-size: 11.5px; font-family: var(--font-mono);">💡 MẸO NHỚ NHANH:</strong>
+              <button class="toggle-switch-btn" onclick="setTimelineMode('detailed')" style="font-size: 10px; padding: 2px 6px;">Xem chi tiết ➔</button>
+            </div>
+            <p style="font-size: 12.5px; color: #fed7aa; line-height: 1.5;">${data.quickTip}</p>
+            <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+              <button class="dock-btn primary" style="font-size: 11.5px; padding: 6px 14px; border-radius: 8px;" onclick="deck.goTo(${currentTimelineStep + 4})">
+                🚀 Đến Slide Chặng ${currentTimelineStep} (Slide 0${currentTimelineStep + 4}) ➔
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        // Giao diện CHI TIẾT (Detailed Step-by-Step)
+        const stepsHtml = data.detailedSteps.map(s => `<div>${s}</div>`).join('');
+        detailBox.innerHTML = `
+          <div style="animation: fadeIn 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span class="slide-eyebrow ${currentTimelineStep === 5 ? 'danger' : ''}">${data.badge}</span>
+              <span style="font-family: var(--font-mono); font-size: 12.5px; color: var(--cyan);">${data.time}</span>
+              <span class="card-meta-pill" style="font-size: 10px; color: var(--pink);">CHẾ ĐỘ CHI TIẾT</span>
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 19px; color: #fff; margin-bottom: 8px;">${data.title}</h3>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px;">${data.desc}</p>
+            <div style="display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: #cbd5e1; background: rgba(0,0,0,0.25); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+              ${stepsHtml}
+            </div>
+          </div>
+          <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-glass); border-radius: 12px; padding: 14px; animation: fadeIn 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong style="color: ${currentTimelineStep === 5 ? 'var(--crimson)' : 'var(--amber)'}; font-size: 11.5px; font-family: var(--font-mono);">CẢNH BÁO AN TOÀN:</strong>
+              <button class="toggle-switch-btn" onclick="setTimelineMode('compact')" style="font-size: 10px; padding: 2px 6px;">Thu gọn ⚡</button>
+            </div>
+            <p style="font-size: 12.5px; color: #fecdd3; line-height: 1.5;">${data.action}</p>
+            <div class="code-pill" style="margin-top: 8px; font-size: 10.5px;">
+              <span>File: ${data.file}</span>
+            </div>
+            <div style="margin-top: 10px; display: flex; justify-content: flex-end;">
+              <button class="dock-btn primary" style="font-size: 11.5px; padding: 6px 14px; border-radius: 8px;" onclick="deck.goTo(${currentTimelineStep + 4})">
+                🚀 Đến Slide Chặng ${currentTimelineStep} (Slide 0${currentTimelineStep + 4}) ➔
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Function copy JSON CVAT Raw chuẩn
+    function copyRawCvatJson() {
+      const el = document.getElementById("cvat-labels-day4-json");
+      if (el) {
+        navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+          showToast("✅ Đã copy person-17 Raw JSON cho CVAT!");
+          if (typeof sfx !== 'undefined' && sfx.playBlip) sfx.playBlip(950, 0.04);
+        });
+      }
+    }
+    setTimelineStep(1, true);
+
+    // Visibility Demo
+    function setVisDemo(v) {
+      const desc = document.getElementById('vis-desc');
+      document.querySelectorAll('.vis-card').forEach(c => c.classList.remove('active'));
+      
+      if (v === 2) {
+        document.querySelector('.vis-card.v2').classList.add('active');
+        desc.innerHTML = '<strong style="color: var(--emerald);">v=2 (Visible)</strong>: Khớp nhìn thấy bằng mắt thường, đặt tâm điểm chính xác.';
+      } else if (v === 1) {
+        document.querySelector('.vis-card.v1').classList.add('active');
+        desc.innerHTML = '<strong style="color: var(--amber);">v=1 (Occluded - Phím Q)</strong>: Khớp bị áo quần hoặc vật che nhưng người còn trong ảnh. <em>BẮT BUỘC ƯỚC LƯỢNG ĐẶT CHẤM!</em>';
+      } else if (v === 0) {
+        document.querySelector('.vis-card.v0').classList.add('active');
+        desc.innerHTML = '<strong style="color: var(--crimson);">v=0 (Outside - Phím O)</strong>: Khớp nằm ngoài mép ảnh. <em>KHÔNG ĐẶT CHẤM!</em>';
+      }
+      sfx.playBlip(650, 0.05);
+    }
+
+    // Checklist Counter
+    function updateChecklist() {
+      const checkboxes = document.querySelectorAll('.deliverable-checkbox');
+      let checkedCount = 0;
+      checkboxes.forEach(cb => { if (cb.checked) checkedCount++; });
+      const counter = document.getElementById('checklist-counter');
+      if (counter) {
+        counter.textContent = `${checkedCount} / 8 ĐÃ CHỌN`;
+        counter.style.color = (checkedCount === 8) ? 'var(--cyan)' : 'var(--emerald)';
+      }
+      sfx.playBlip(900, 0.04);
+    }
+
+    // Fullscreen Toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+    document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+
+    // Sound toggle
+    const soundBtn = document.getElementById('btn-sound');
+    soundBtn.addEventListener('click', () => {
+      sfx.enabled = !sfx.enabled;
+      soundBtn.textContent = sfx.enabled ? '🔊' : '🔇';
+      showToast(sfx.enabled ? 'Đã bật âm thanh hiệu ứng' : 'Đã tắt âm thanh');
+    });
+
+    // Drawer Matrix Modal
+    function toggleDrawer(forceState) {
+      const drawer = document.getElementById('drawer-modal');
+      const shouldOpen = (typeof forceState === 'boolean') ? forceState : !drawer.classList.contains('open');
+      drawer.classList.toggle('open', shouldOpen);
+      if (shouldOpen) sfx.playBlip(800, 0.05);
+    }
+    function closeDrawer(e) {
+      if (e.target.id === 'drawer-modal') toggleDrawer(false);
+    }
+
+    // Toast & Clipboard copy
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(`📋 Đã copy: ${text.length > 45 ? text.substring(0, 42) + '...' : text}`);
+        sfx.playBlip(1000, 0.05);
+      });
+    }
+  </script>
+<script id="cvat-labels-day4-json" type="application/json">[{"name": "person", "type": "skeleton", "color": "#34d399", "attributes": [], "svg": "<line x1=\"60.0\" y1=\"92.0\" x2=\"59.0\" y2=\"71.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"16\" stroke-width=\"0.5\" data-node-to=\"14\"></line><line x1=\"59.0\" y1=\"71.0\" x2=\"58.0\" y2=\"51.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"14\" stroke-width=\"0.5\" data-node-to=\"12\"></line><line x1=\"40.0\" y1=\"92.0\" x2=\"41.0\" y2=\"71.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"17\" stroke-width=\"0.5\" data-node-to=\"15\"></line><line x1=\"41.0\" y1=\"71.0\" x2=\"42.0\" y2=\"51.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"15\" stroke-width=\"0.5\" data-node-to=\"13\"></line><line x1=\"58.0\" y1=\"51.0\" x2=\"42.0\" y2=\"51.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"12\" stroke-width=\"0.5\" data-node-to=\"13\"></line><line x1=\"62.0\" y1=\"21.0\" x2=\"58.0\" y2=\"51.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"6\" stroke-width=\"0.5\" data-node-to=\"12\"></line><line x1=\"38.0\" y1=\"21.0\" x2=\"42.0\" y2=\"51.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"7\" stroke-width=\"0.5\" data-node-to=\"13\"></line><line x1=\"62.0\" y1=\"21.0\" x2=\"38.0\" y2=\"21.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"6\" stroke-width=\"0.5\" data-node-to=\"7\"></line><line x1=\"62.0\" y1=\"21.0\" x2=\"68.0\" y2=\"35.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"6\" stroke-width=\"0.5\" data-node-to=\"8\"></line><line x1=\"38.0\" y1=\"21.0\" x2=\"32.0\" y2=\"35.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"7\" stroke-width=\"0.5\" data-node-to=\"9\"></line><line x1=\"68.0\" y1=\"35.0\" x2=\"72.0\" y2=\"48.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"8\" stroke-width=\"0.5\" data-node-to=\"10\"></line><line x1=\"32.0\" y1=\"35.0\" x2=\"28.0\" y2=\"48.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"9\" stroke-width=\"0.5\" data-node-to=\"11\"></line><line x1=\"53.5\" y1=\"6.5\" x2=\"46.5\" y2=\"6.5\" stroke=\"black\" data-type=\"edge\" data-node-from=\"2\" stroke-width=\"0.5\" data-node-to=\"3\"></line><line x1=\"50.0\" y1=\"9.0\" x2=\"53.5\" y2=\"6.5\" stroke=\"black\" data-type=\"edge\" data-node-from=\"1\" stroke-width=\"0.5\" data-node-to=\"2\"></line><line x1=\"50.0\" y1=\"9.0\" x2=\"46.5\" y2=\"6.5\" stroke=\"black\" data-type=\"edge\" data-node-from=\"1\" stroke-width=\"0.5\" data-node-to=\"3\"></line><line x1=\"53.5\" y1=\"6.5\" x2=\"57.5\" y2=\"8.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"2\" stroke-width=\"0.5\" data-node-to=\"4\"></line><line x1=\"46.5\" y1=\"6.5\" x2=\"42.5\" y2=\"8.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"3\" stroke-width=\"0.5\" data-node-to=\"5\"></line><line x1=\"57.5\" y1=\"8.0\" x2=\"62.0\" y2=\"21.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"4\" stroke-width=\"0.5\" data-node-to=\"6\"></line><line x1=\"42.5\" y1=\"8.0\" x2=\"38.0\" y2=\"21.0\" stroke=\"black\" data-type=\"edge\" data-node-from=\"5\" stroke-width=\"0.5\" data-node-to=\"7\"></line><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"50.0\" cy=\"9.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"1\" data-node-id=\"1\" data-label-name=\"nose\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"53.5\" cy=\"6.5\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"2\" data-node-id=\"2\" data-label-name=\"left_eye\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"46.5\" cy=\"6.5\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"3\" data-node-id=\"3\" data-label-name=\"right_eye\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"57.5\" cy=\"8.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"4\" data-node-id=\"4\" data-label-name=\"left_ear\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"42.5\" cy=\"8.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"5\" data-node-id=\"5\" data-label-name=\"right_ear\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"62.0\" cy=\"21.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"6\" data-node-id=\"6\" data-label-name=\"left_shoulder\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"38.0\" cy=\"21.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"7\" data-node-id=\"7\" data-label-name=\"right_shoulder\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"68.0\" cy=\"35.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"8\" data-node-id=\"8\" data-label-name=\"left_elbow\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"32.0\" cy=\"35.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"9\" data-node-id=\"9\" data-label-name=\"right_elbow\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"72.0\" cy=\"48.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"10\" data-node-id=\"10\" data-label-name=\"left_wrist\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"28.0\" cy=\"48.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"11\" data-node-id=\"11\" data-label-name=\"right_wrist\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"58.0\" cy=\"51.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"12\" data-node-id=\"12\" data-label-name=\"left_hip\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"42.0\" cy=\"51.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"13\" data-node-id=\"13\" data-label-name=\"right_hip\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"59.0\" cy=\"71.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"14\" data-node-id=\"14\" data-label-name=\"left_knee\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"41.0\" cy=\"71.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"15\" data-node-id=\"15\" data-label-name=\"right_knee\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"60.0\" cy=\"92.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"16\" data-node-id=\"16\" data-label-name=\"left_ankle\"></circle><circle r=\"1.5\" stroke=\"black\" fill=\"#b3b3b3\" cx=\"40.0\" cy=\"92.0\" stroke-width=\"0.1\" data-type=\"element node\" data-element-id=\"17\" data-node-id=\"17\" data-label-name=\"right_ankle\"></circle>", "sublabels": [{"name": "nose", "type": "points", "attributes": [], "color": "#ff6f61"}, {"name": "left_eye", "type": "points", "attributes": [], "color": "#ffa600"}, {"name": "right_eye", "type": "points", "attributes": [], "color": "#ffd166"}, {"name": "left_ear", "type": "points", "attributes": [], "color": "#06d6a0"}, {"name": "right_ear", "type": "points", "attributes": [], "color": "#118ab2"}, {"name": "left_shoulder", "type": "points", "attributes": [], "color": "#8338ec"}, {"name": "right_shoulder", "type": "points", "attributes": [], "color": "#ef476f"}, {"name": "left_elbow", "type": "points", "attributes": [], "color": "#3a86ff"}, {"name": "right_elbow", "type": "points", "attributes": [], "color": "#fb5607"}, {"name": "left_wrist", "type": "points", "attributes": [], "color": "#2ec4b6"}, {"name": "right_wrist", "type": "points", "attributes": [], "color": "#e71d36"}, {"name": "left_hip", "type": "points", "attributes": [], "color": "#9bf6ff"}, {"name": "right_hip", "type": "points", "attributes": [], "color": "#bdb2ff"}, {"name": "left_knee", "type": "points", "attributes": [], "color": "#ffc6ff"}, {"name": "right_knee", "type": "points", "attributes": [], "color": "#a0c4ff"}, {"name": "left_ankle", "type": "points", "attributes": [], "color": "#caffbf"}, {"name": "right_ankle", "type": "points", "attributes": [], "color": "#fdffb6"}]}]</script>
+</body>
+</html>

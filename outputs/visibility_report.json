@@ -57,8 +57,8 @@
       {
         "index": 7,
         "name": "left_elbow",
-        "v2_visible": 24,
-        "v1_occluded": 5,
+        "v2_visible": 23,
+        "v1_occluded": 6,
         "v0_outside": 0
       },
       {
@@ -71,8 +71,8 @@
       {
         "index": 9,
         "name": "left_wrist",
-        "v2_visible": 20,
-        "v1_occluded": 9,
+        "v2_visible": 19,
+        "v1_occluded": 10,
         "v0_outside": 0
       },
       {
@@ -126,8 +126,8 @@
       }
     ],
     "totals": {
-      "v2_visible": 347,
-      "v1_occluded": 115,
+      "v2_visible": 345,
+      "v1_occluded": 117,
       "v0_outside": 31
     }
   },

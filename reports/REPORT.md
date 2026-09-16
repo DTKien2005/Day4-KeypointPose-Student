@@ -12,14 +12,14 @@ Họ tên: Đỗ Trung Kiên   Nhóm: T013   Ngày: 16/09/2026
 | --- | ---: |
 | Số ảnh đã gán | 20 |
 | Số skeleton | 29 |
-| v=2 / v=1 / v=0 | 347 / 115 / 31 |
+| v=2 / v=1 / v=0 | 345 / 117 / 31 |
 | Thời gian trung bình mỗi ảnh | ~4.5 phút / ảnh |
 
 Ba khớp có `%v=1` cao nhất (trích từ `reports/visibility_report.md`):
 
 1. **`left_ear`**: 59% (17 lần v=1 / 29 người)
 2. **`right_ear`**: 48% (14 lần v=1 / 29 người)
-3. **`right_wrist`**: 34% (10 lần v=1 / 29 người) *(kế cận: `left_wrist` 31%, `left_hip` 31%)*
+3. **`left_wrist` & `right_wrist`**: 34% (10 lần v=1 / 29 người mỗi bên) *(kế cận: `left_hip` 31%)*
 
 ### Chúng có đúng là những khớp bạn thấy khó gán nhất không? Nếu không, giải thích.
 
@@ -35,18 +35,18 @@ Ba khớp có `%v=1` cao nhất (trích từ `reports/visibility_report.md`):
 
 <!-- Số liệu kết xuất thực tế từ outputs/eval_vs_gold.json đối chiếu giữa nhãn và gold/labels/train -->
 
-| Chỉ số | Trước rework | Sau rework (dự kiến) |
+| Chỉ số | Trước rework | Sau rework (thực tế) |
 | --- | ---: | ---: |
-| OKS trung bình | **0.941** | **0.952** |
+| OKS trung bình | **0.941** | **0.945** |
 | OKS@0.50 | **1.000** | **1.000** |
 | OKS@0.75 | **1.000** | **1.000** |
-| Lỗi `dao_trai_phai` | 1 *(tại train_13)* | 0 |
+| Lỗi `dao_trai_phai` | 1 *(tại train_13)* | **0** |
 | Lỗi `nham_nguoi` | 0 | 0 |
 | Lỗi `xoa_khop_bi_che` | 0 | 0 |
 
 **Tôi đã sửa gì giữa hai lần chạy** (ghi cụ thể: ảnh nào, người thứ mấy, khớp nào):
 
-- `train_13.jpg`, người thứ 1 (người đi bộ ở hậu cảnh xa phía bên trái): Hoán đổi lại các cặp trái/phải (`shoulder`, `hip`, `knee`, `ankle`) do góc nhìn từ phía sau khiến nhận định hướng đi bị đảo chiều giải phẫu.
+- `train_13.jpg`, người thứ 1 (người đi bộ ở hậu cảnh xa phía bên trái): Hoán đổi lại cặp mắt cá chân (`left_ankle`, `right_ankle`) và tay bị bắt chéo do góc nhìn từ phía sau khiến nhận định hướng đi bị nhầm lẫn; sau khi sửa OKS đạt 0.945 và triệt tiêu hoàn toàn lỗi đảo trái/phải (`dao_trai_phai = 0`).
 - `train_16.jpg`, người thứ 1: Đã chuẩn hóa cặp mắt đồng nhất hướng với vai và hông.
 - `train_01.jpg` & `train_05.jpg`: Xác nhận chuẩn hóa các cờ `v=1` và `v=0` theo đúng nguyên tắc giải phẫu và biên ảnh.
 
